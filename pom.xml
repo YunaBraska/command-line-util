@@ -71,6 +71,14 @@
         </plugins>
     </build>
 
+    <!-- JitPack builds GitHub projects on demand and provides ready-to-use packages -->
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
+
     <scm>
         <connection>scm:git:${git-project.url}</connection>
         <developerConnection>scm:git:${git-project.url}</developerConnection>

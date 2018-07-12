@@ -61,6 +61,12 @@
             <version>0.1</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>berlin.yuna</groupId>
+            <artifactId>maven-parent</artifactId>
+            <version>0.0.1</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <!-- TODO: Work on dynamic parent for jacoco -->

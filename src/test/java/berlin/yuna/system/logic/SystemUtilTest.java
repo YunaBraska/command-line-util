@@ -152,6 +152,12 @@ public class SystemUtilTest {
     }
 
     @Test
+    public void getTestTargetResource_shouldBeSuccessful() {
+        Path targetTestResource = SystemUtil.getTargetTestResource();
+        assertThat(targetTestResource.toFile().exists(), is(true));
+    }
+
+    @Test
     public void readFile_shouldBeSuccessful() {
         String testResource = SystemUtil.readFile(Paths.get(getClass().getClassLoader().getResource(testFileOrigin).getPath()));
         assertThat(testResource, is(notNullValue()));

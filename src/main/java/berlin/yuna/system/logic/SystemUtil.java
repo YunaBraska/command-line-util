@@ -1,6 +1,16 @@
 package berlin.yuna.system.logic;
 
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
+
 import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.ARM;
 import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.LINUX;
 import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.MAC;
@@ -12,21 +22,14 @@ import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.attribute.PosixFilePermission;
-import java.util.Comparator;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Set;
-
 
 public class SystemUtil {
 
+    public static final String RESOURCE_TYPE_MAIN = "main";
+    public static final String RESOURCE_TYPE_TEST = "test";
+    public static final String RESOURCE_TYPE_TARGET_TEST = "target/test-classes";
     private static final String TMP_DIR = System.getProperty("java.io.tmpdir");
-
+    private static final String USER_DIR = System.getProperty("user.dir");
 
     /**
      * Supported operation system enum
@@ -107,7 +110,7 @@ public class SystemUtil {
      * @return main resource path
      */
     public static Path getMainResource(final Class clazz) {
-        return getResource(clazz, "main");
+        return getResource(clazz, RESOURCE_TYPE_MAIN);
     }
 
     /**
@@ -117,7 +120,16 @@ public class SystemUtil {
      * @return test resource path
      */
     public static Path getTestResource(final Class clazz) {
-        return getResource(clazz, "test");
+        return getResource(clazz, RESOURCE_TYPE_TEST);
+    }
+
+    /**
+     * Gets resource folder from target test sources instead of target sources
+     *
+     * @return target test resource path
+     */
+    public static Path getTargetTestResource() {
+        return Paths.get(USER_DIR, RESOURCE_TYPE_TARGET_TEST);
     }
 
     public static String getResourceFolder(final Class clazz) {

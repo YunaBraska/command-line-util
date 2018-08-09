@@ -81,28 +81,6 @@ public class SystemUtil {
         return true;
     }
 
-    private static boolean setFilePermission(File destination, PosixFilePermission permission) {
-        boolean successState = false;
-        switch (permission) {
-            case OWNER_WRITE:
-            case GROUP_WRITE:
-            case OTHERS_WRITE:
-                successState = destination.setWritable(true, permission == OWNER_WRITE);
-                break;
-            case OWNER_READ:
-            case GROUP_READ:
-            case OTHERS_READ:
-                successState = destination.setReadable(true, permission == OWNER_READ);
-                break;
-            case OWNER_EXECUTE:
-            case GROUP_EXECUTE:
-            case OTHERS_EXECUTE:
-                successState = destination.setExecutable(true, permission == OWNER_EXECUTE);
-                break;
-        }
-        return successState;
-    }
-
     /**
      * Copies a source file to temp path as the resources are not accessable/executeable
      *
@@ -203,10 +181,56 @@ public class SystemUtil {
         return true;
     }
 
+    /**
+     * kills processes by name
+     *
+     * @param name name of the process to kill
+     */
+    public static void killProcessByName(final String name) {
+        new Terminal().execute(getKillCommand(getOsType()) + " " + name);
+    }
+
+    static String getKillCommand(OperatingSystem operatingSystem) {
+        switch (operatingSystem) {
+            case WINDOWS:
+                return "taskkill /F /IM";
+            case ARM:
+            case MAC:
+            case LINUX:
+                return "pkill -f";
+            case SOLARIS:
+            case UNKNOWN:
+                return "killall";
+        }
+        return "pkill -f";
+    }
+
     private static Path getResource(final Class clazz, final String resourceType) {
         String resPath = getResourceFolder(clazz).toString();
         resPath = resPath.replace("target/classes", "src/" + resourceType + "/resources");
         resPath = resPath.replace("target/test-classes", "src/" + resourceType + "/resources");
         return Paths.get(resPath);
+    }
+
+    private static boolean setFilePermission(File destination, PosixFilePermission permission) {
+        boolean successState = false;
+        switch (permission) {
+            case OWNER_WRITE:
+            case GROUP_WRITE:
+            case OTHERS_WRITE:
+                successState = destination.setWritable(true, permission == OWNER_WRITE);
+                break;
+            case OWNER_READ:
+            case GROUP_READ:
+            case OTHERS_READ:
+                successState = destination.setReadable(true, permission == OWNER_READ);
+                break;
+            case OWNER_EXECUTE:
+            case GROUP_EXECUTE:
+            case OTHERS_EXECUTE:
+                successState = destination.setExecutable(true, permission == OWNER_EXECUTE);
+                break;
+        }
+        return successState;
     }
 }

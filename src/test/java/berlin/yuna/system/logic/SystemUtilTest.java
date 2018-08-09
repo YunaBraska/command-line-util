@@ -16,11 +16,9 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.LINUX;
+import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.*;
 import static java.nio.file.attribute.PosixFilePermission.*;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -73,7 +71,7 @@ public class SystemUtilTest {
     @Test
     public void getOsType_withSonus_shouldReturnSolaris() {
         System.setProperty("os.name", "sunos");
-        assertThat(SystemUtil.getOsType(), is(SystemUtil.OperatingSystem.SOLARIS));
+        assertThat(SystemUtil.getOsType(), is(SOLARIS));
     }
 
     @Test
@@ -91,7 +89,22 @@ public class SystemUtilTest {
     @Test
     public void getOsType_withOtherOS_shouldReturnUnknown() {
         System.setProperty("os.name", "otherOth");
-        assertThat(SystemUtil.getOsType(), is(SystemUtil.OperatingSystem.UNKNOWN));
+        assertThat(SystemUtil.getOsType(), is(UNKNOWN));
+    }
+
+    @Test
+    public void killProcessByName_withAnyOsType_shouldExecuteWithoutError(){
+        SystemUtil.killProcessByName("testProcess");
+    }
+
+    @Test
+    public void getKillCommand_shouldReturnRightCommand(){
+        assertThat(SystemUtil.getKillCommand(WINDOWS), is(equalTo("taskkill /F /IM")));
+        assertThat(SystemUtil.getKillCommand(ARM), is(equalTo("pkill -f")));
+        assertThat(SystemUtil.getKillCommand(MAC), is(equalTo("pkill -f")));
+        assertThat(SystemUtil.getKillCommand(LINUX), is(equalTo("pkill -f")));
+        assertThat(SystemUtil.getKillCommand(SOLARIS), is(equalTo("killall")));
+        assertThat(SystemUtil.getKillCommand(UNKNOWN), is(equalTo("killall")));
     }
 
     @Test

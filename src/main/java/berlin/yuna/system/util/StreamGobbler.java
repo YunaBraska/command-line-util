@@ -24,7 +24,7 @@ public class StreamGobbler implements Runnable {
     @Override
     public void run() {
         new BufferedReader(new InputStreamReader(inputStream)).lines().forEach(string -> {
-            consumerList.forEach(c -> c.accept(string));
+            consumerList.forEach(c -> c.accept(string + System.lineSeparator()));
         });
     }
 }

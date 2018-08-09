@@ -2,6 +2,7 @@ package berlin.yuna.system.logic;
 
 
 import java.io.File;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,6 +20,9 @@ import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.UNKNOWN;
 import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.WINDOWS;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
+import static java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE;
+import static java.nio.file.attribute.PosixFilePermission.OWNER_READ;
+import static java.nio.file.attribute.PosixFilePermission.OWNER_WRITE;
 import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
 
@@ -62,26 +66,19 @@ public class SystemUtil {
     }
 
     /**
-     * Sets silent file permissions
-     *
+     * Sets silent file permissions (PosixFilePermissions will be mapped to filePermissions as windows doesn't understand posix)
      * @param path        Path to set permissions on
      * @param permissions permission list to set for the given Path
      * @return true if no error occurred and if permissions are set successfully
      */
-    public static boolean setFilePermissions(Path path, PosixFilePermission... permissions) {
-        try {
-            Files.setPosixFilePermissions(path, EnumSet.copyOf(asList(permissions)));
-            Set<PosixFilePermission> result = Files.getPosixFilePermissions(path, NOFOLLOW_LINKS);
-
-            for (PosixFilePermission permission : permissions) {
-                if (!result.contains(permission)) {
-                    return false;
-                }
+    public static boolean setFilePermissions(final Path path, final PosixFilePermission... permissions) {
+        File destination = path.toFile();
+        for(PosixFilePermission permission : permissions) {
+            if(!setFilePermission(destination, permission)){
+                return false;
             }
-            return true;
-        } catch (Exception ignored) {
-            return false;
         }
+        return true;
     }
 
     /**
@@ -132,9 +129,13 @@ public class SystemUtil {
         return Paths.get(USER_DIR, RESOURCE_TYPE_TARGET_TEST);
     }
 
-    public static String getResourceFolder(final Class clazz) {
-        ClassLoader classLoader = clazz.getClassLoader();
-        return requireNonNull(classLoader.getResource("")).getPath();
+    public static Path getResourceFolder(final Class clazz) {
+        try {
+            ClassLoader classLoader = clazz.getClassLoader();
+            return Paths.get(requireNonNull(classLoader.getResource("")).toURI());
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -180,10 +181,56 @@ public class SystemUtil {
         return true;
     }
 
+    /**
+     * kills processes by name
+     *
+     * @param name name of the process to kill
+     */
+    public static void killProcessByName(final String name) {
+        new Terminal().execute(getKillCommand(getOsType()) + " " + name);
+    }
+
+    static String getKillCommand(OperatingSystem operatingSystem) {
+        switch (operatingSystem) {
+            case WINDOWS:
+                return "taskkill /F /IM";
+            case ARM:
+            case MAC:
+            case LINUX:
+                return "pkill -f";
+            case SOLARIS:
+            case UNKNOWN:
+                return "killall";
+        }
+        return "pkill -f";
+    }
+
     private static Path getResource(final Class clazz, final String resourceType) {
-        String resPath = getResourceFolder(clazz);
+        String resPath = getResourceFolder(clazz).toString();
         resPath = resPath.replace("target/classes", "src/" + resourceType + "/resources");
         resPath = resPath.replace("target/test-classes", "src/" + resourceType + "/resources");
         return Paths.get(resPath);
+    }
+
+    private static boolean setFilePermission(File destination, PosixFilePermission permission) {
+        boolean successState = false;
+        switch (permission) {
+            case OWNER_WRITE:
+            case GROUP_WRITE:
+            case OTHERS_WRITE:
+                successState = destination.setWritable(true, permission == OWNER_WRITE);
+                break;
+            case OWNER_READ:
+            case GROUP_READ:
+            case OTHERS_READ:
+                successState = destination.setReadable(true, permission == OWNER_READ);
+                break;
+            case OWNER_EXECUTE:
+            case GROUP_EXECUTE:
+            case OTHERS_EXECUTE:
+                successState = destination.setExecutable(true, permission == OWNER_EXECUTE);
+                break;
+        }
+        return successState;
     }
 }

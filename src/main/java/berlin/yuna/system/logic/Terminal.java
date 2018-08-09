@@ -9,11 +9,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
+import static java.util.Arrays.asList;
 import static org.slf4j.LoggerFactory.getLogger;
 
 
@@ -23,7 +24,8 @@ public class Terminal {
     private StringBuilder consoleInfo = new StringBuilder();
     private StringBuilder consoleError = new StringBuilder();
 
-    private long timeoutMs = 10000;
+    private int status = 0;
+    private long timeoutMs = -1;
     private boolean breakOnError = true;
     private File dir = new File(System.getProperty("user.dir"));
     private List<Consumer<String>> consumerInfo = new ArrayList<>();
@@ -41,10 +43,13 @@ public class Terminal {
 
     /**
      * Clears the console output {@link Terminal#consoleInfo()} {@link Terminal#consoleError()}
+     *
+     * @return Terminal
      */
-    public void clearConsole() {
+    public Terminal clearConsole() {
         consoleInfo = new StringBuilder();
         consoleError = new StringBuilder();
+        return this;
     }
 
     /**
@@ -52,7 +57,7 @@ public class Terminal {
      * @return Terminal
      */
     public Terminal consumerInfo(final Consumer<String>... consumerInfo) {
-        this.consumerInfo.addAll(Arrays.asList(consumerInfo));
+        this.consumerInfo.addAll(asList(consumerInfo));
         return this;
     }
 
@@ -61,7 +66,7 @@ public class Terminal {
      * @return Terminal
      */
     public Terminal consumerError(final Consumer<String>... consumerError) {
-        this.consumerError.addAll(Arrays.asList(consumerError));
+        this.consumerError.addAll(asList(consumerError));
         return this;
     }
 
@@ -74,8 +79,10 @@ public class Terminal {
     }
 
     /**
-     * soft timeout to wait for the log being finished.
-     * Also used for heartbeat check (timeoutMs / 40) which will also timeout if there is no logging
+     * Alternative to {@link Process#waitFor} as sometimes a process can be to fast or to slow for {@link Process#waitFor} or you need a timeout
+     * Its combined with ({@link Terminal#breakOnError(boolean)})
+     * Default : -1 (deactivated)
+     * Also activates a heartbeat check (timeoutMs / 40) which will also timeout if there is no output is happening
      *
      * @param timeoutMs timeout in milliseconds
      * @return Terminal
@@ -140,7 +147,7 @@ public class Terminal {
     }
 
     /**
-     * @return the currently used {@Link Process} - return null when no command was executed
+     * @return the currently used {@link Process} - return null when no command was executed
      */
     public Process process() {
         return process;
@@ -163,27 +170,21 @@ public class Terminal {
     /**
      * Executes a command with (sh or cmd.exe) ant he help of the {@link ProcessBuilder}
      * Default working directory: user.dir
-     * Default breakOnError: true
-     * Default soft timeout: will stop waiting for command when 250ms when no logging happens or the command runs 10s
+     * {@link Terminal#timeoutMs(long)} if timeout is needed
      *
      * @param command command to execute
      * @return a new {@link Process} object for managing the subprocess
      */
-    public Process execute(final String command) {
+    public Terminal execute(final String command) {
         try {
             process = process(command);
-            int count;
-            long startTime = System.currentTimeMillis();
-            do {
-                count = countTerminalMessages();
-                Thread.sleep(timeoutMs / 40);
+            if (timeoutMs == -1L) {
+                status = process.waitFor();
+                LOG.debug("Terminal status [{}]", status);
+            } else {
+                waitFor(command);
             }
-            while ((count == 0 || count != (countTerminalMessages())) && (System.currentTimeMillis() - startTime) < timeoutMs);
-
-            if (breakOnError && !consoleError.toString().isEmpty()) {
-                throw new IllegalStateException("[" + dir.getName() + "] [" + command + "] " + consoleError.toString());
-            }
-            return process;
+            return this;
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -199,6 +200,7 @@ public class Terminal {
     public Process process(final String command) throws IOException {
         ProcessBuilder builder = new ProcessBuilder();
         builder.directory(dir);
+        System.getProperties().forEach((key, value) -> builder.environment().put(key.toString(), value.toString()));
         builder.command(addExecutor(OS_TYPE, command));
         Process process = builder.start();
 
@@ -208,11 +210,39 @@ public class Terminal {
         return process;
     }
 
+    /**
+     * @return status code from last command {@link Process#waitFor()}
+     */
+    public int status() {
+        return status;
+    }
+
     String[] addExecutor(final OperatingSystem os, final String command) {
         if (os == OperatingSystem.WINDOWS) {
             return new String[]{"cmd.exe", "/c", command};
         } else {
             return new String[]{"sh", "-c", command};
+        }
+    }
+
+    private void waitFor(final String command) throws InterruptedException {
+        status = 0;
+        int count;
+        long startTime = System.currentTimeMillis();
+        do {
+            count = countTerminalMessages();
+            Thread.sleep(timeoutMs / 40);
+        }
+        while ((count == 0 || count != (countTerminalMessages())) && (System.currentTimeMillis() - startTime) < timeoutMs);
+
+        if ((System.currentTimeMillis() - startTime) > timeoutMs) {
+            throw new RuntimeException(new TimeoutException("Execution got timed out [" + command + "]"));
+        }
+
+        if (breakOnError && !consoleError.toString().isEmpty()) {
+            throw new IllegalStateException("[" + dir.getName() + "] [" + command + "] " + consoleError.toString());
+        } else if (!consoleError.toString().isEmpty()) {
+            status = 2;
         }
     }
 

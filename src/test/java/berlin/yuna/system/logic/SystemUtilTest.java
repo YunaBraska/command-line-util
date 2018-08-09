@@ -8,6 +8,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -15,12 +16,9 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.LINUX;
-import static java.nio.file.attribute.PosixFilePermission.OTHERS_WRITE;
-import static java.nio.file.attribute.PosixFilePermission.OWNER_WRITE;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.notNullValue;
+import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.*;
+import static java.nio.file.attribute.PosixFilePermission.*;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -73,7 +71,7 @@ public class SystemUtilTest {
     @Test
     public void getOsType_withSonus_shouldReturnSolaris() {
         System.setProperty("os.name", "sunos");
-        assertThat(SystemUtil.getOsType(), is(SystemUtil.OperatingSystem.SOLARIS));
+        assertThat(SystemUtil.getOsType(), is(SOLARIS));
     }
 
     @Test
@@ -91,7 +89,22 @@ public class SystemUtilTest {
     @Test
     public void getOsType_withOtherOS_shouldReturnUnknown() {
         System.setProperty("os.name", "otherOth");
-        assertThat(SystemUtil.getOsType(), is(SystemUtil.OperatingSystem.UNKNOWN));
+        assertThat(SystemUtil.getOsType(), is(UNKNOWN));
+    }
+
+    @Test
+    public void killProcessByName_withAnyOsType_shouldExecuteWithoutError(){
+        SystemUtil.killProcessByName("testProcess");
+    }
+
+    @Test
+    public void getKillCommand_shouldReturnRightCommand(){
+        assertThat(SystemUtil.getKillCommand(WINDOWS), is(equalTo("taskkill /F /IM")));
+        assertThat(SystemUtil.getKillCommand(ARM), is(equalTo("pkill -f")));
+        assertThat(SystemUtil.getKillCommand(MAC), is(equalTo("pkill -f")));
+        assertThat(SystemUtil.getKillCommand(LINUX), is(equalTo("pkill -f")));
+        assertThat(SystemUtil.getKillCommand(SOLARIS), is(equalTo("killall")));
+        assertThat(SystemUtil.getKillCommand(UNKNOWN), is(equalTo("killall")));
     }
 
     @Test
@@ -117,7 +130,9 @@ public class SystemUtilTest {
     @Test
     public void fixFilePermissions_shouldBeSuccessful() {
         Path input = SystemUtil.copyResourceToTemp(getClass(), testFileOrigin);
+        assertThat(SystemUtil.setFilePermissions(input, OWNER_READ), is(true));
         assertThat(SystemUtil.setFilePermissions(input, OWNER_WRITE), is(true));
+        assertThat(SystemUtil.setFilePermissions(input, OWNER_EXECUTE), is(true));
     }
 
     @Test
@@ -158,8 +173,8 @@ public class SystemUtilTest {
     }
 
     @Test
-    public void readFile_shouldBeSuccessful() {
-        String testResource = SystemUtil.readFile(Paths.get(getClass().getClassLoader().getResource(testFileOrigin).getPath()));
+    public void readFile_shouldBeSuccessful() throws URISyntaxException {
+        String testResource = SystemUtil.readFile(Paths.get(getClass().getClassLoader().getResource(testFileOrigin).toURI()));
         assertThat(testResource, is(notNullValue()));
     }
 
@@ -169,8 +184,8 @@ public class SystemUtilTest {
     }
 
     @Test
-    public void readFileLines_shouldBeSuccessful() {
-        List<String> testResource = SystemUtil.readFileLines(Paths.get(getClass().getClassLoader().getResource(".gitignore").getPath()));
+    public void readFileLines_shouldBeSuccessful() throws URISyntaxException {
+        List<String> testResource = SystemUtil.readFileLines(Paths.get(getClass().getClassLoader().getResource(".gitignore").toURI()));
         assertThat(testResource, is(notNullValue()));
         assertThat(testResource.size(), is(17));
     }

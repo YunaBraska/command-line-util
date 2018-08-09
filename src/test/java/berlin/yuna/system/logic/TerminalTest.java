@@ -21,6 +21,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @RunWith(MockitoJUnitRunner.class)
 public class TerminalTest {
 
+    public static final String LINE_SEPARATOR = System.lineSeparator();
+
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
@@ -52,17 +54,18 @@ public class TerminalTest {
         assertThat(terminal.process(), is(nullValue()));
         terminal.execute("echo \"Howdy\"");
         assertThat(terminal.process(), is(notNullValue()));
-        assertThat(terminal.consoleInfo().toString(), equalTo("Howdy"));
-        assertThat(terminal.consoleInfo().length(), is(5));
+        assertThat(terminal.consoleInfo().toString(), equalTo("Howdy" + LINE_SEPARATOR));
+        assertThat(terminal.consoleInfo().length(), is(6));
         assertThat(terminal.consoleError().length(), is(0));
+        assertThat(terminal.status(), is(0));
     }
 
     @Test
     public void clearLogs_shouldClearInfoAndErrorOutput() {
         terminal.execute("echo \"Howdy\"");
         terminal.breakOnError(false).execute("invalidCommand");
-        assertThat(terminal.consoleInfo().length(), is(5));
-        assertThat(terminal.consoleError().length(), is(37));
+        assertThat(terminal.consoleInfo().length(), is(6));
+        assertThat(terminal.consoleError().length(), is(38));
 
         terminal.clearConsole();
         assertThat(terminal.consoleInfo().length(), is(0));
@@ -72,15 +75,22 @@ public class TerminalTest {
     @Test
     public void execute_withWrongCommandAndNoBreakOnError_shouldPrintConsoleErrorOutput() {
         terminal.breakOnError(false).execute("invalidCommand");
-        assertThat(terminal.consoleError().toString(), equalTo("sh: invalidCommand: command not found"));
+        assertThat(terminal.consoleError().toString(), equalTo("sh: invalidCommand: command not found" + LINE_SEPARATOR));
         assertThat(terminal.consoleInfo().length(), is(0));
     }
 
     @Test
-    public void execute_withWrongCommand_shouldThrowException() {
+    public void execute_withWrongCommandAndTimeout_shouldThrowException() {
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("sh: invalidCommand: command not found");
-        terminal.execute("invalidCommand");
+        terminal.timeoutMs(256).execute("invalidCommand");
+    }
+
+    @Test
+    public void execute_withWrongCommandAndTimeoutAndBreakOnErrorFalse_shouldThrowException() {
+        terminal.timeoutMs(256).breakOnError(false).execute("invalidCommand");
+        assertThat(terminal.status(), is(2));
+        assertThat(terminal.consoleError().toString(), equalTo("sh: invalidCommand: command not found" + LINE_SEPARATOR));
     }
 
     @Test
@@ -92,7 +102,7 @@ public class TerminalTest {
 
     @Test
     public void settingTimeout_ShouldBeSuccessful() {
-        assertThat(terminal.timeoutMs(), is(10000L));
+        assertThat(terminal.timeoutMs(), is(-1L));
         assertThat(terminal.timeoutMs(69).timeoutMs(), is(69L));
     }
 
@@ -116,6 +126,19 @@ public class TerminalTest {
         assertThat(terminal.consumerError(System.err::println), is(notNullValue()));
         terminal.execute("echo \"Howdy\"");
         terminal.breakOnError(false).execute("invalidCommand");
+    }
+
+    @Test
+    public void executeTwice_ShouldReturnMessagesFromBothCommands() {
+        String console = terminal.execute("echo \"Sub\"").execute("echo \"ject\"").consoleInfo().toString();
+        assertThat(console, is(equalTo("Sub" + LINE_SEPARATOR + "ject" + LINE_SEPARATOR)));
+    }
+
+    @Test
+    public void execute_ShouldContainSystemPropertiesAsWell() {
+        System.setProperty("aa", "bb");
+        String console = terminal.timeoutMs(256).execute("echo $aa").consoleInfo().toString();
+        assertThat(console, is(equalTo("bb" + LINE_SEPARATOR)));
     }
 
 }

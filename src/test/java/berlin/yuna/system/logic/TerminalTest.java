@@ -52,7 +52,7 @@ public class TerminalTest {
     @Test
     public void execute_shouldPrintConsoleInfoOutput() {
         assertThat(terminal.process(), is(nullValue()));
-        terminal.execute("echo \"Howdy\"");
+        terminal.execute("echo Howdy");
         assertThat(terminal.process(), is(notNullValue()));
         assertThat(terminal.consoleInfo().toString(), equalTo("Howdy" + LINE_SEPARATOR));
         assertThat(terminal.consoleInfo().length(), is(6));

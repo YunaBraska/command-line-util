@@ -8,6 +8,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -16,8 +17,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.LINUX;
-import static java.nio.file.attribute.PosixFilePermission.OTHERS_WRITE;
-import static java.nio.file.attribute.PosixFilePermission.OWNER_WRITE;
+import static java.nio.file.attribute.PosixFilePermission.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -117,7 +117,9 @@ public class SystemUtilTest {
     @Test
     public void fixFilePermissions_shouldBeSuccessful() {
         Path input = SystemUtil.copyResourceToTemp(getClass(), testFileOrigin);
+        assertThat(SystemUtil.setFilePermissions(input, OWNER_READ), is(true));
         assertThat(SystemUtil.setFilePermissions(input, OWNER_WRITE), is(true));
+        assertThat(SystemUtil.setFilePermissions(input, OWNER_EXECUTE), is(true));
     }
 
     @Test
@@ -158,8 +160,8 @@ public class SystemUtilTest {
     }
 
     @Test
-    public void readFile_shouldBeSuccessful() {
-        String testResource = SystemUtil.readFile(Paths.get(getClass().getClassLoader().getResource(testFileOrigin).getPath()));
+    public void readFile_shouldBeSuccessful() throws URISyntaxException {
+        String testResource = SystemUtil.readFile(Paths.get(getClass().getClassLoader().getResource(testFileOrigin).toURI()));
         assertThat(testResource, is(notNullValue()));
     }
 
@@ -169,8 +171,8 @@ public class SystemUtilTest {
     }
 
     @Test
-    public void readFileLines_shouldBeSuccessful() {
-        List<String> testResource = SystemUtil.readFileLines(Paths.get(getClass().getClassLoader().getResource(".gitignore").getPath()));
+    public void readFileLines_shouldBeSuccessful() throws URISyntaxException {
+        List<String> testResource = SystemUtil.readFileLines(Paths.get(getClass().getClassLoader().getResource(".gitignore").toURI()));
         assertThat(testResource, is(notNullValue()));
         assertThat(testResource.size(), is(17));
     }

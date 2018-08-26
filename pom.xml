@@ -65,7 +65,7 @@
             <url>https://artifactory.yuna.berlin:443/libs-release-local</url>
         </repository>
     </repositories>
-    
+
     <scm>
         <connection>scm:git:${git-project.url}</connection>
         <developerConnection>scm:git:${git-project.url}</developerConnection>

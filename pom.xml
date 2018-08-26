@@ -58,6 +58,14 @@
         </dependency>
     </dependencies>
 
+    <repositories>
+        <repository>
+            <id>berlin.yuna</id>
+            <name>berlin.yuna</name>
+            <url>https://artifactory.yuna.berlin:443/libs-release-local</url>
+        </repository>
+    </repositories>
+
     <distributionManagement>
         <repository>
             <id>berlin.yuna</id>

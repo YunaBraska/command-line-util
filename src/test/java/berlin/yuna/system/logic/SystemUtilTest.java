@@ -163,7 +163,7 @@ public class SystemUtilTest {
     @Test
     public void getTestResource_shouldBeSuccessful() {
         Path testResource = SystemUtil.getTestResource(getClass());
-        assertThat(testResource.toFile().exists(), is(true));
+        assertThat("Resource path [" + testResource + "] does not exists", testResource.toFile().exists(), is(true));
     }
 
     @Test

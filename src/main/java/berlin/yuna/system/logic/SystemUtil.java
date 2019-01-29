@@ -194,15 +194,12 @@ public class SystemUtil {
         switch (operatingSystem) {
             case WINDOWS:
                 return "taskkill /F /IM";
-            case ARM:
-            case MAC:
-            case LINUX:
-                return "pkill -f";
             case SOLARIS:
             case UNKNOWN:
                 return "killall";
+            default:
+                return "pkill -f";
         }
-        return "pkill -f";
     }
 
     private static Path getResource(final Class clazz, final String resourceType) {

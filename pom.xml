@@ -6,7 +6,7 @@
     <parent>
         <groupId>berlin.yuna</groupId>
         <artifactId>maven-parent</artifactId>
-        <version>0.0.1</version>
+        <version>0.0.3</version>
     </parent>
 
     <groupId>berlin.yuna</groupId>
@@ -57,6 +57,14 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <repositories>
+        <repository>
+            <id>berlin.yuna</id>
+            <name>berlin.yuna</name>
+            <url>https://artifactory.yuna.berlin:443/libs-release-local</url>
+        </repository>
+    </repositories>
 
     <scm>
         <connection>scm:git:${git-project.url}</connection>

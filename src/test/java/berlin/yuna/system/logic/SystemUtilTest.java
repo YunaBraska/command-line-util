@@ -7,18 +7,27 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
-import java.util.regex.Pattern;
+import java.util.Objects;
 
-import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.*;
-import static java.nio.file.attribute.PosixFilePermission.*;
-import static org.hamcrest.CoreMatchers.*;
+import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.ARM;
+import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.LINUX;
+import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.MAC;
+import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.SOLARIS;
+import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.UNKNOWN;
+import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.WINDOWS;
+import static java.nio.file.attribute.PosixFilePermission.OTHERS_WRITE;
+import static java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE;
+import static java.nio.file.attribute.PosixFilePermission.OWNER_READ;
+import static java.nio.file.attribute.PosixFilePermission.OWNER_WRITE;
+import static java.util.Objects.requireNonNull;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -93,12 +102,12 @@ public class SystemUtilTest {
     }
 
     @Test
-    public void killProcessByName_withAnyOsType_shouldExecuteWithoutError(){
+    public void killProcessByName_withAnyOsType_shouldExecuteWithoutError() {
         SystemUtil.killProcessByName("testProcess");
     }
 
     @Test
-    public void getKillCommand_shouldReturnRightCommand(){
+    public void getKillCommand_shouldReturnRightCommand() {
         assertThat(SystemUtil.getKillCommand(WINDOWS), is(equalTo("taskkill /F /IM")));
         assertThat(SystemUtil.getKillCommand(ARM), is(equalTo("pkill -f")));
         assertThat(SystemUtil.getKillCommand(MAC), is(equalTo("pkill -f")));
@@ -155,24 +164,6 @@ public class SystemUtilTest {
     }
 
     @Test
-    public void getMainResource_shouldBeSuccessful() {
-        Path mainResource = SystemUtil.getMainResource(getClass());
-        assertThat(mainResource.toFile().exists(), is(true));
-    }
-
-    @Test
-    public void getTestResource_shouldBeSuccessful() {
-        Path testResource = SystemUtil.getTestResource(getClass());
-        assertThat("Resource path [" + testResource + "] does not exists", testResource.toFile().exists(), is(true));
-    }
-
-    @Test
-    public void getTestTargetResource_shouldBeSuccessful() {
-        Path targetTestResource = SystemUtil.getTargetTestResource();
-        assertThat(targetTestResource.toFile().exists(), is(true));
-    }
-
-    @Test
     public void readFile_shouldBeSuccessful() throws URISyntaxException {
         String testResource = SystemUtil.readFile(Paths.get(getClass().getClassLoader().getResource(testFileOrigin).toURI()));
         assertThat(testResource, is(notNullValue()));
@@ -185,7 +176,8 @@ public class SystemUtilTest {
 
     @Test
     public void readFileLines_shouldBeSuccessful() throws URISyntaxException {
-        List<String> testResource = SystemUtil.readFileLines(Paths.get(getClass().getClassLoader().getResource(".gitignore").toURI()));
+        List<String> testResource = SystemUtil.readFileLines(Paths.get(requireNonNull(getClass().getClassLoader().getResource(
+                ".gitignore")).toURI()));
         assertThat(testResource, is(notNullValue()));
         assertThat(testResource.size(), is(17));
     }

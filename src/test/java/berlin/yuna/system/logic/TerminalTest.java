@@ -63,7 +63,7 @@ public class TerminalTest {
     @Test
     public void clearLogs_shouldClearInfoAndErrorOutput() {
         terminal.execute("echo \"Howdy\"");
-        terminal.timeoutMs(10).breakOnError(false).execute("invalidCommand");
+        terminal.timeoutMs(512).breakOnError(false).execute("invalidCommand");
         assertThat(terminal.consoleInfo().length(), is(6));
         assertThat(terminal.consoleError().length(), is(38));
 
@@ -74,7 +74,7 @@ public class TerminalTest {
 
     @Test
     public void execute_withWrongCommandAndNoBreakOnError_shouldPrintConsoleErrorOutput() {
-        terminal.timeoutMs(10).breakOnError(false).execute("invalidCommand");
+        terminal.timeoutMs(512).breakOnError(false).execute("invalidCommand");
         assertThat(terminal.consoleError().toString(), equalTo("sh: invalidCommand: command not found" + LINE_SEPARATOR));
         assertThat(terminal.consoleInfo().length(), is(0));
     }

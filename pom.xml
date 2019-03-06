@@ -74,6 +74,58 @@
                     <source>${java.version}</source>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.3</version>
+                <configuration>
+                    <excludes>
+                        <!--
+                        *   Match zero or more characters
+                        **  Match zero or more directories
+                        ?   Match a single character
+                        -->
+                        <exclude>**/*/model/**/*</exclude>
+                        <exclude>**/*/domain/**/*</exclude>
+                        <exclude>**/*/persistence/**/*</exclude>
+                        <exclude>**/*/target/**/*</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.ning.maven.plugins</groupId>
+                <artifactId>maven-duplicate-finder-plugin</artifactId>
+                <version>1.0.9</version>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <failBuildInCaseOfDifferentContentConflict>true</failBuildInCaseOfDifferentContentConflict>
+                            <failBuildInCaseOfEqualContentConflict>false</failBuildInCaseOfEqualContentConflict>
+                            <ignoredResources>
+                                <ignoredResource>.*</ignoredResource>
+                            </ignoredResources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 

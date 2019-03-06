@@ -12,7 +12,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Objects;
 
 import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.ARM;
 import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.LINUX;
@@ -56,49 +55,57 @@ public class SystemUtilTest {
     public void getOsType_withArm_shouldReturnArm() {
         System.setProperty("os.arch", "arm-linux");
         System.setProperty("os.name", "notRelevant");
-        assertThat(SystemUtil.getOsType(), is(SystemUtil.OperatingSystem.ARM));
+        assertThat(SystemUtil.getOsType(), is(ARM));
+        assertThat(SystemUtil.isArm(), is(true));
     }
 
     @Test
     public void getOsType_withLinux_shouldReturnLinux() {
         System.setProperty("os.name", "linux");
         assertThat(SystemUtil.getOsType(), is(LINUX));
+        assertThat(SystemUtil.isLinux(), is(true));
     }
 
     @Test
     public void getOsType_withUnix_shouldReturnLinux() {
         System.setProperty("os.name", "unix");
         assertThat(SystemUtil.getOsType(), is(LINUX));
+        assertThat(SystemUtil.isLinux(), is(true));
     }
 
     @Test
     public void getOsType_withMac_shouldReturnMac() {
         System.setProperty("os.name", "mac");
-        assertThat(SystemUtil.getOsType(), is(SystemUtil.OperatingSystem.MAC));
+        assertThat(SystemUtil.getOsType(), is(MAC));
+        assertThat(SystemUtil.isMac(), is(true));
     }
 
     @Test
     public void getOsType_withSonus_shouldReturnSolaris() {
         System.setProperty("os.name", "sunos");
         assertThat(SystemUtil.getOsType(), is(SOLARIS));
+        assertThat(SystemUtil.isSolaris(), is(true));
     }
 
     @Test
     public void getOsType_withAix_shouldReturnLinux() {
         System.setProperty("os.name", "ibm-aix");
         assertThat(SystemUtil.getOsType(), is(LINUX));
+        assertThat(SystemUtil.isLinux(), is(true));
     }
 
     @Test
     public void getOsType_withWindows_shouldReturnWindows() {
         System.setProperty("os.name", "MsDos Windows 3.1");
         assertThat(SystemUtil.getOsType(), is(SystemUtil.OperatingSystem.WINDOWS));
+        assertThat(SystemUtil.isWindows(), is(true));
     }
 
     @Test
     public void getOsType_withOtherOS_shouldReturnUnknown() {
         System.setProperty("os.name", "otherOth");
         assertThat(SystemUtil.getOsType(), is(UNKNOWN));
+        assertThat(SystemUtil.isUnknown(), is(true));
     }
 
     @Test
@@ -118,14 +125,14 @@ public class SystemUtilTest {
 
     @Test
     public void copyResourceFile_shouldBeSuccessful() {
-        Path outputPath = SystemUtil.copyResourceToTemp(getClass(), testFileOrigin);
+        final Path outputPath = SystemUtil.copyResourceToTemp(getClass(), testFileOrigin);
         assertThat(outputPath, is(notNullValue()));
     }
 
     @Test
     public void copyResourceFile_WithExistingFile_shouldBeSuccessful() {
-        Path outputPathFirst = SystemUtil.copyResourceToTemp(getClass(), testFileOrigin);
-        Path outputPathSecond = SystemUtil.copyResourceToTemp(getClass(), testFileOrigin);
+        final Path outputPathFirst = SystemUtil.copyResourceToTemp(getClass(), testFileOrigin);
+        final Path outputPathSecond = SystemUtil.copyResourceToTemp(getClass(), testFileOrigin);
         assertThat(outputPathFirst, is(notNullValue()));
         assertThat(outputPathSecond, is(notNullValue()));
         assertThat(outputPathSecond, is(outputPathFirst));
@@ -138,15 +145,15 @@ public class SystemUtilTest {
 
     @Test
     public void fixFilePermissions_shouldBeSuccessful() {
-        Path input = SystemUtil.copyResourceToTemp(getClass(), testFileOrigin);
-        assertThat(SystemUtil.setFilePermissions(input, OWNER_READ), is(true));
+        final Path input = SystemUtil.copyResourceToTemp(getClass(), testFileOrigin);
+        assertThat(SystemUtil.setFilePermissions(input, OWNER_READ, OWNER_WRITE, OWNER_EXECUTE), is(true));
         assertThat(SystemUtil.setFilePermissions(input, OWNER_WRITE), is(true));
         assertThat(SystemUtil.setFilePermissions(input, OWNER_EXECUTE), is(true));
     }
 
     @Test
     public void fixFilePermissions_WithoutPosixPermissions_shouldNotThrowException() throws Exception {
-        Path path = SystemUtil.copyResourceToTemp(getClass(), testFileOrigin);
+        final Path path = SystemUtil.copyResourceToTemp(getClass(), testFileOrigin);
         Files.deleteIfExists(path);
         assertThat(path, is(notNullValue()));
 
@@ -165,7 +172,8 @@ public class SystemUtilTest {
 
     @Test
     public void readFile_shouldBeSuccessful() throws URISyntaxException {
-        String testResource = SystemUtil.readFile(Paths.get(getClass().getClassLoader().getResource(testFileOrigin).toURI()));
+        final String testResource = SystemUtil.readFile(Paths.get(requireNonNull(getClass().getClassLoader().getResource(
+                testFileOrigin)).toURI()));
         assertThat(testResource, is(notNullValue()));
     }
 
@@ -176,7 +184,7 @@ public class SystemUtilTest {
 
     @Test
     public void readFileLines_shouldBeSuccessful() throws URISyntaxException {
-        List<String> testResource = SystemUtil.readFileLines(Paths.get(requireNonNull(getClass().getClassLoader().getResource(
+        final List<String> testResource = SystemUtil.readFileLines(Paths.get(requireNonNull(getClass().getClassLoader().getResource(
                 ".gitignore")).toURI()));
         assertThat(testResource, is(notNullValue()));
         assertThat(testResource.size(), is(17));

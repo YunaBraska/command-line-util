@@ -28,8 +28,8 @@ public class Terminal {
     private long timeoutMs = -1;
     private boolean breakOnError = true;
     private File dir = new File(System.getProperty("user.dir"));
-    private List<Consumer<String>> consumerInfo = new ArrayList<>();
-    private List<Consumer<String>> consumerError = new ArrayList<>();
+    private final List<Consumer<String>> consumerInfo = new ArrayList<>();
+    private final List<Consumer<String>> consumerError = new ArrayList<>();
 
     private static final Logger LOG = getLogger(Terminal.class);
     private static final OperatingSystem OS_TYPE = SystemUtil.getOsType();
@@ -56,7 +56,8 @@ public class Terminal {
      * @param consumerInfo consumer for console info output
      * @return Terminal
      */
-    public Terminal consumerInfo(final Consumer<String>... consumerInfo) {
+    @SafeVarargs
+    public final Terminal consumerInfo(final Consumer<String>... consumerInfo) {
         this.consumerInfo.addAll(asList(consumerInfo));
         return this;
     }
@@ -65,7 +66,8 @@ public class Terminal {
      * @param consumerError consumer for console error output
      * @return Terminal
      */
-    public Terminal consumerError(final Consumer<String>... consumerError) {
+    @SafeVarargs
+    public final Terminal consumerError(final Consumer<String>... consumerError) {
         this.consumerError.addAll(asList(consumerError));
         return this;
     }
@@ -87,7 +89,7 @@ public class Terminal {
      * @param timeoutMs timeout in milliseconds
      * @return Terminal
      */
-    public Terminal timeoutMs(long timeoutMs) {
+    public Terminal timeoutMs(final long timeoutMs) {
         this.timeoutMs = timeoutMs;
         return this;
     }
@@ -106,7 +108,7 @@ public class Terminal {
      * @param breakOnError set state
      * @return Terminal
      */
-    public Terminal breakOnError(boolean breakOnError) {
+    public Terminal breakOnError(final boolean breakOnError) {
         this.breakOnError = breakOnError;
         return this;
     }
@@ -123,7 +125,7 @@ public class Terminal {
      * @param dir sets the working directory
      * @return Terminal
      */
-    public Terminal dir(String dir) {
+    public Terminal dir(final String dir) {
         this.dir = new File(dir);
         return this;
     }
@@ -132,7 +134,7 @@ public class Terminal {
      * @param dir sets the working directory
      * @return Terminal
      */
-    public Terminal dir(File dir) {
+    public Terminal dir(final File dir) {
         this.dir = dir;
         return this;
     }
@@ -141,7 +143,7 @@ public class Terminal {
      * @param dir sets the working directory
      * @return Terminal
      */
-    public Terminal dir(Path dir) {
+    public Terminal dir(final Path dir) {
         this.dir = dir.toFile();
         return this;
     }
@@ -156,15 +158,15 @@ public class Terminal {
     /**
      * @return returns the console output
      */
-    public StringBuilder consoleInfo() {
-        return consoleInfo;
+    public String consoleInfo() {
+        return consoleInfo.toString();
     }
 
     /**
      * @return returns the console error output
      */
-    public StringBuilder consoleError() {
-        return consoleError;
+    public String consoleError() {
+        return consoleError.toString();
     }
 
     /**
@@ -173,7 +175,7 @@ public class Terminal {
      * {@link Terminal#timeoutMs(long)} if timeout is needed
      *
      * @param command command to execute
-     * @return a new {@link Process} object for managing the subprocess
+     * @return a new {@link Process} object for managing the sub process
      */
     public Terminal execute(final String command) {
         try {
@@ -194,15 +196,15 @@ public class Terminal {
      * Executes a command with (sh or cmd.exe) ant he help of the {@link ProcessBuilder}
      *
      * @param command command to execute
-     * @return a new {@link Process} object for managing the subprocess
+     * @return a new {@link Process} object for managing the sub process
      * @throws IOException if an I/O error occurs
      */
     public Process process(final String command) throws IOException {
-        ProcessBuilder builder = new ProcessBuilder();
+        final ProcessBuilder builder = new ProcessBuilder();
         builder.directory(dir);
         System.getProperties().forEach((key, value) -> builder.environment().put(key.toString(), value.toString()));
         builder.command(addExecutor(OS_TYPE, command));
-        Process process = builder.start();
+        final Process process = builder.start();
 
         Executors.newSingleThreadExecutor().submit(new StreamGobbler(process.getInputStream(), consumerInfo));
         Executors.newSingleThreadExecutor().submit(new StreamGobbler(process.getErrorStream(), consumerError));
@@ -228,7 +230,7 @@ public class Terminal {
     private void waitFor(final String command) throws InterruptedException {
         status = 0;
         int count;
-        long startTime = System.currentTimeMillis();
+        final long startTime = System.currentTimeMillis();
         do {
             count = countTerminalMessages();
             Thread.sleep(timeoutMs / 40);

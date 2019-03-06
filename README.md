@@ -9,6 +9,42 @@
 ### Description
 System util to get easy access to command line unix/windows
 
+### [Example] Execute command
+````java
+new Terminal()
+    .consumerInfo(System.out::println) //optional listener [Consumer<String>]
+    .consumerError(System.err::println) //optional listener [Consumer<String>]
+    .consoleInfo() //optional returns all info output in a String
+    .consoleError() //optional returns all error output in a String
+    .clearConsole() //optional clears previous consoleInfo/consoleError console
+    .dir("myWorinkDirectory") //optional sets default working directory
+    .timeoutMs(512) //optional to limit command or for workaround when commands are too fast to return exit status
+    .breakOnError(false) //optional - only with timeoutMs possible
+    .execute("echo Howdy") //executes the command
+    .process //optional returns java Process;
+````
+### [Example] Operating system tools
+````java
+//Enum [ARM, LINUX, MAC, WINDOWS, SOLARIS, UNKNOWN]
+OperatingSystem os = SystemUtil.getOsType();
+
+//Kill process
+killProcessByName("tomcat");
+
+//Translates and saves [PosixFilePermission]s to generic
+SystemUtil.setFilePermissions(file, OWNER_READ, OWNER_WRITE, OWNER_EXECUTE);
+
+//File reading
+String content SystemUtil.readFile(path);
+List<String> contentLines SystemUtil.readFileLines(path);
+
+//Delete dir recursively
+boolean removed = SystemUtil.deleteDirectory
+````
+
+### TODO
+* [] waitFor - some commands are too fast to get the exit status - workaround is to run terminal with .timeout().execute
+
 ![system-util](src/main/resources/banner.png "system-util")
 
 [License-Url]: https://www.apache.org/licenses/LICENSE-2.0

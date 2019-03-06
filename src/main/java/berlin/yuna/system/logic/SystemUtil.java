@@ -2,13 +2,12 @@ package berlin.yuna.system.logic;
 
 
 import java.io.File;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.ARM;
 import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.LINUX;
@@ -20,7 +19,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE;
 import static java.nio.file.attribute.PosixFilePermission.OWNER_READ;
 import static java.nio.file.attribute.PosixFilePermission.OWNER_WRITE;
-import static java.util.Objects.requireNonNull;
 
 
 public class SystemUtil {
@@ -40,8 +38,8 @@ public class SystemUtil {
      * @return current {@link OperatingSystem} if supported, else {@link OperatingSystem#UNKNOWN}
      */
     public static OperatingSystem getOsType() {
-        String osName = System.getProperty("os.name").toLowerCase();
-        String osArch = System.getProperty("os.arch").toLowerCase();
+        final String osName = System.getProperty("os.name").toLowerCase();
+        final String osArch = System.getProperty("os.arch").toLowerCase();
         if (osArch.contains("arm")) {
             return ARM;
         } else if ((osName.contains("nix") || osName.contains("nux") || osName.indexOf("aix") > 0)) {
@@ -58,6 +56,60 @@ public class SystemUtil {
     }
 
     /**
+     * Checks operating system with {@link this#getOsType()}
+     *
+     * @return true if the system is {@link OperatingSystem#ARM}
+     */
+    public static boolean isArm() {
+        return getOsType() == ARM;
+    }
+
+    /**
+     * Checks operating system with {@link this#getOsType()}
+     *
+     * @return true if the system is {@link OperatingSystem#LINUX}
+     */
+    public static boolean isLinux() {
+        return getOsType() == LINUX;
+    }
+
+    /**
+     * Checks operating system with {@link this#getOsType()}
+     *
+     * @return true if the system is {@link OperatingSystem#MAC}
+     */
+    public static boolean isMac() {
+        return getOsType() == MAC;
+    }
+
+    /**
+     * Checks operating system with {@link this#getOsType()}
+     *
+     * @return true if the system is {@link OperatingSystem#WINDOWS}
+     */
+    public static boolean isWindows() {
+        return getOsType() == WINDOWS;
+    }
+
+    /**
+     * Checks operating system with {@link this#getOsType()}
+     *
+     * @return true if the system is {@link OperatingSystem#SOLARIS}
+     */
+    public static boolean isSolaris() {
+        return getOsType() == SOLARIS;
+    }
+
+    /**
+     * Checks operating system with {@link this#getOsType()}
+     *
+     * @return true if the system is {@link OperatingSystem#UNKNOWN}
+     */
+    public static boolean isUnknown() {
+        return getOsType() == UNKNOWN;
+    }
+
+    /**
      * Sets silent file permissions (PosixFilePermissions will be mapped to filePermissions as windows doesn't understand posix)
      *
      * @param path        Path to set permissions on
@@ -65,7 +117,7 @@ public class SystemUtil {
      * @return true if no error occurred and if permissions are set successfully
      */
     public static boolean setFilePermissions(final Path path, final PosixFilePermission... permissions) {
-        File destination = path.toFile();
+        final File destination = path.toFile();
         for (PosixFilePermission permission : permissions) {
             if (!setFilePermission(destination, permission)) {
                 return false;
@@ -75,14 +127,14 @@ public class SystemUtil {
     }
 
     /**
-     * Copies a source file to temp path as the resources are not accessable/executeable
+     * Copies a source file to temp path as the resources are not accessible/executable
      *
      * @param clazz        Caller class to find its resource / get its classloader
      * @param relativePath relative resource file path
      * @return temp path from copied file output
      */
     public static Path copyResourceToTemp(final Class clazz, final String relativePath) {
-        File tmpFile = new File(TMP_DIR, new File(relativePath).getName());
+        final File tmpFile = new File(TMP_DIR, new File(relativePath).getName());
         if (!tmpFile.exists()) {
             try {
                 Files.copy(clazz.getClassLoader().getResourceAsStream(relativePath), tmpFile.toPath());
@@ -91,15 +143,6 @@ public class SystemUtil {
             }
         }
         return tmpFile.toPath();
-    }
-
-    public static Path getResourceFolder(final Class clazz) {
-        try {
-            ClassLoader classLoader = clazz.getClassLoader();
-            return Paths.get(requireNonNull(classLoader.getResource("")).toURI());
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     /**
@@ -134,15 +177,16 @@ public class SystemUtil {
      * Deletes silent a directory
      *
      * @param path directory to delete
-     * @return true if no exception occurred
+     * @return false on exception and any deletion error
      */
     public static boolean deleteDirectory(final Path path) {
+        final AtomicBoolean success = new AtomicBoolean(true);
         try {
-            Files.walk(path).sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
+            Files.walk(path).sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(file -> success.set((success.get() && file.delete()) && success.get()));
         } catch (Exception ignored) {
-            return false;
+            return success.get();
         }
-        return true;
+        return success.get();
     }
 
     /**
@@ -154,7 +198,7 @@ public class SystemUtil {
         new Terminal().execute(getKillCommand(getOsType()) + " " + name);
     }
 
-    static String getKillCommand(OperatingSystem operatingSystem) {
+    static String getKillCommand(final OperatingSystem operatingSystem) {
         switch (operatingSystem) {
             case WINDOWS:
                 return "taskkill /F /IM";
@@ -166,14 +210,7 @@ public class SystemUtil {
         }
     }
 
-    private static Path getResource(final Class clazz, final String resourceType) {
-        String resPath = getResourceFolder(clazz).toString();
-        resPath = resPath.replace("target/classes", "src/" + resourceType + "/resources");
-        resPath = resPath.replace("target/test-classes", "src/" + resourceType + "/resources");
-        return Paths.get(resPath);
-    }
-
-    private static boolean setFilePermission(File destination, PosixFilePermission permission) {
+    private static boolean setFilePermission(final File destination, final PosixFilePermission permission) {
         boolean successState = false;
         switch (permission) {
             case OWNER_WRITE:

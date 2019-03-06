@@ -64,7 +64,7 @@ public class TerminalTest {
         terminal.execute("echo \"Howdy\"");
         terminal.timeoutMs(512).breakOnError(false).execute("invalidCommand");
         assertThat(terminal.consoleInfo(), containsString("Howdy"));
-        assertThat(terminal.consoleError(), containsString("command not found"));
+        assertThat(terminal.consoleError(), containsString("not found"));
 
         terminal.clearConsole();
         assertThat(terminal.consoleInfo().length(), is(0));
@@ -75,14 +75,14 @@ public class TerminalTest {
     public void execute_withWrongCommandAndNoBreakOnError_shouldPrintConsoleErrorOutput() {
         terminal.timeoutMs(512).breakOnError(false).execute("invalidCommand");
         assertThat(terminal.consoleError(), containsString("invalidCommand"));
-        assertThat(terminal.consoleError(), containsString("command not found"));
+        assertThat(terminal.consoleError(), containsString("not found"));
         assertThat(terminal.consoleInfo().length(), is(0));
     }
 
     @Test
     public void execute_withWrongCommandAndTimeout_shouldThrowException() {
         expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("command not found");
+        expectedException.expectMessage("not found");
         terminal.timeoutMs(256).execute("invalidCommand");
     }
 
@@ -91,7 +91,7 @@ public class TerminalTest {
         terminal.timeoutMs(256).breakOnError(false).execute("invalidCommand");
         assertThat(terminal.status(), is(2));
         assertThat(terminal.consoleError(), containsString("invalidCommand"));
-        assertThat(terminal.consoleError(), containsString("command not found"));
+        assertThat(terminal.consoleError(), containsString("not found"));
     }
 
     @Test

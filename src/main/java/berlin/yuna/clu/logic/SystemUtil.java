@@ -56,7 +56,7 @@ public class SystemUtil {
     }
 
     /**
-     * Checks operating system with {@link this#getOsType()}
+     * Checks operating system with {@link SystemUtil#getOsType()}
      *
      * @return true if the system is {@link OperatingSystem#ARM}
      */
@@ -65,7 +65,7 @@ public class SystemUtil {
     }
 
     /**
-     * Checks operating system with {@link this#getOsType()}
+     * Checks operating system with {@link SystemUtil#getOsType()}
      *
      * @return true if the system is {@link OperatingSystem#LINUX}
      */
@@ -74,7 +74,7 @@ public class SystemUtil {
     }
 
     /**
-     * Checks operating system with {@link this#getOsType()}
+     * Checks operating system with {@link SystemUtil#getOsType()}
      *
      * @return true if the system is {@link OperatingSystem#MAC}
      */
@@ -83,7 +83,7 @@ public class SystemUtil {
     }
 
     /**
-     * Checks operating system with {@link this#getOsType()}
+     * Checks operating system with {@link SystemUtil#getOsType()}
      *
      * @return true if the system is {@link OperatingSystem#WINDOWS}
      */
@@ -92,7 +92,7 @@ public class SystemUtil {
     }
 
     /**
-     * Checks operating system with {@link this#getOsType()}
+     * Checks operating system with {@link SystemUtil#getOsType()}
      *
      * @return true if the system is {@link OperatingSystem#SOLARIS}
      */
@@ -101,7 +101,7 @@ public class SystemUtil {
     }
 
     /**
-     * Checks operating system with {@link this#getOsType()}
+     * Checks operating system with {@link SystemUtil#getOsType()}
      *
      * @return true if the system is {@link OperatingSystem#UNKNOWN}
      */

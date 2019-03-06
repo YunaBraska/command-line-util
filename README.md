@@ -7,7 +7,7 @@
 [![Gitter][Gitter-image]][Gitter-Url] 
 
 ### Description
-System util to get easy access to command line unix/windows
+Command-line-util to get easy access to command line unix/windows
 
 ### [Example] Execute command
 ````java

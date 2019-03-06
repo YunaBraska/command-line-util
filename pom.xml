@@ -5,8 +5,7 @@
 
     <groupId>berlin.yuna</groupId>
     <artifactId>command-line-util</artifactId>
-    <version>0.0.1</version>
-
+    <version>0.0.4</version>
     <packaging>jar</packaging>
 
     <name>${project.artifactId}</name>
@@ -39,14 +38,14 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.7.25</version>
+            <version>1.8.0-beta4</version>
             <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.12</version>
+            <version>4.13-beta-2</version>
             <scope>test</scope>
         </dependency>
         <dependency>

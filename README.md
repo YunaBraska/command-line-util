@@ -1,4 +1,4 @@
-# System-Util
+# Command-line-util
 
 [![License][License-Image]][License-Url]
 [![Build][Build-Status-Image]][Build-Status-Url] 
@@ -43,7 +43,8 @@ boolean removed = SystemUtil.deleteDirectory
 ````
 
 ### TODO
-* [] waitFor - some commands are too fast to get the exit status - workaround is to run terminal with .timeout().execute
+* [ ] Timeout test
+* [ ] waitFor - some commands are too fast to get the exit status - workaround is to run terminal with .timeout().execute
 
 ![system-util](src/main/resources/banner.png "system-util")
 

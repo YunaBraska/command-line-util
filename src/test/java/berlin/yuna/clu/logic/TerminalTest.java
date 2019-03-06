@@ -12,16 +12,16 @@ import java.nio.file.Paths;
 
 import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.LINUX;
 import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.WINDOWS;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TerminalTest {
-
-    private static final String LINE_SEPARATOR = System.lineSeparator();
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
@@ -54,8 +54,7 @@ public class TerminalTest {
         assertThat(terminal.process(), is(nullValue()));
         terminal.execute("echo Howdy");
         assertThat(terminal.process(), is(notNullValue()));
-        assertThat(terminal.consoleInfo(), equalTo("Howdy" + LINE_SEPARATOR));
-        assertThat(terminal.consoleInfo().length(), is(6));
+        assertThat(terminal.consoleInfo(), containsString("Howdy"));
         assertThat(terminal.consoleError().length(), is(0));
         assertThat(terminal.status(), is(0));
     }
@@ -64,8 +63,8 @@ public class TerminalTest {
     public void clearLogs_shouldClearInfoAndErrorOutput() {
         terminal.execute("echo \"Howdy\"");
         terminal.timeoutMs(512).breakOnError(false).execute("invalidCommand");
-        assertThat(terminal.consoleInfo().length(), is(6));
-        assertThat(terminal.consoleError().length(), is(38));
+        assertThat(terminal.consoleInfo(), containsString("Howdy"));
+        assertThat(terminal.consoleError(), containsString("command not found"));
 
         terminal.clearConsole();
         assertThat(terminal.consoleInfo().length(), is(0));
@@ -75,14 +74,15 @@ public class TerminalTest {
     @Test
     public void execute_withWrongCommandAndNoBreakOnError_shouldPrintConsoleErrorOutput() {
         terminal.timeoutMs(512).breakOnError(false).execute("invalidCommand");
-        assertThat(terminal.consoleError(), equalTo("sh: invalidCommand: command not found" + LINE_SEPARATOR));
+        assertThat(terminal.consoleError(), containsString("invalidCommand"));
+        assertThat(terminal.consoleError(), containsString("command not found"));
         assertThat(terminal.consoleInfo().length(), is(0));
     }
 
     @Test
     public void execute_withWrongCommandAndTimeout_shouldThrowException() {
         expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("sh: invalidCommand: command not found");
+        expectedException.expectMessage("command not found");
         terminal.timeoutMs(256).execute("invalidCommand");
     }
 
@@ -90,13 +90,14 @@ public class TerminalTest {
     public void execute_withWrongCommandAndTimeoutAndBreakOnErrorFalse_shouldThrowException() {
         terminal.timeoutMs(256).breakOnError(false).execute("invalidCommand");
         assertThat(terminal.status(), is(2));
-        assertThat(terminal.consoleError(), equalTo("sh: invalidCommand: command not found" + LINE_SEPARATOR));
+        assertThat(terminal.consoleError(), containsString("invalidCommand"));
+        assertThat(terminal.consoleError(), containsString("command not found"));
     }
 
     @Test
     public void execute_inWrongDirectory_shouldThrowIOException() {
         expectedException.expect(RuntimeException.class);
-        expectedException.expectMessage("Cannot run program \"sh\" (in directory \"\"): error=2, No such file or directory");
+        expectedException.expectMessage("Cannot run program");
         terminal.dir("").execute("invalidCommand");
     }
 
@@ -131,14 +132,16 @@ public class TerminalTest {
     @Test
     public void executeTwice_ShouldReturnMessagesFromBothCommands() {
         final String console = terminal.execute("echo \"Sub\"").execute("echo \"ject\"").consoleInfo();
-        assertThat(console, is(equalTo("Sub" + LINE_SEPARATOR + "ject" + LINE_SEPARATOR)));
+        assertThat(console, containsString("Sub"));
+        assertThat(console, containsString("ject"));
     }
 
     @Test
     public void execute_ShouldContainSystemPropertiesAsWell() {
         System.setProperty("aa", "bb");
         final String console = terminal.timeoutMs(256).execute("echo $aa").consoleInfo();
-        assertThat(console, is(equalTo("bb" + LINE_SEPARATOR)));
+        assertThat(console, containsString("bb"));
+        assertThat(console, not(containsString("aa")));
     }
 
 }

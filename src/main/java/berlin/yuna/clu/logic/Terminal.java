@@ -1,8 +1,8 @@
-package berlin.yuna.system.logic;
+package berlin.yuna.clu.logic;
 
 
-import berlin.yuna.system.logic.SystemUtil.OperatingSystem;
-import berlin.yuna.system.util.StreamGobbler;
+import berlin.yuna.clu.logic.SystemUtil.OperatingSystem;
+import berlin.yuna.clu.util.StreamGobbler;
 import org.slf4j.Logger;
 
 import java.io.File;

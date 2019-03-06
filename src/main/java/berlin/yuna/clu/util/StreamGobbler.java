@@ -1,4 +1,4 @@
-package berlin.yuna.system.util;
+package berlin.yuna.clu.util;
 
 import java.io.BufferedReader;
 import java.io.InputStream;

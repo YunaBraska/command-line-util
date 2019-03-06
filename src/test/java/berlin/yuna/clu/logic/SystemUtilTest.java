@@ -1,4 +1,4 @@
-package berlin.yuna.system.logic;
+package berlin.yuna.clu.logic;
 
 import org.junit.After;
 import org.junit.Before;
@@ -13,12 +13,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.ARM;
-import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.LINUX;
-import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.MAC;
-import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.SOLARIS;
-import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.UNKNOWN;
-import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.WINDOWS;
+import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.ARM;
+import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.LINUX;
+import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.MAC;
+import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.SOLARIS;
+import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.UNKNOWN;
+import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.WINDOWS;
 import static java.nio.file.attribute.PosixFilePermission.OTHERS_WRITE;
 import static java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE;
 import static java.nio.file.attribute.PosixFilePermission.OWNER_READ;

@@ -1,4 +1,4 @@
-package berlin.yuna.system.logic;
+package berlin.yuna.clu.logic;
 
 
 import java.io.File;
@@ -9,12 +9,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.ARM;
-import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.LINUX;
-import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.MAC;
-import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.SOLARIS;
-import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.UNKNOWN;
-import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.WINDOWS;
+import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.ARM;
+import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.LINUX;
+import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.MAC;
+import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.SOLARIS;
+import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.UNKNOWN;
+import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.WINDOWS;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE;
 import static java.nio.file.attribute.PosixFilePermission.OWNER_READ;

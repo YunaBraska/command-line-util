@@ -1,4 +1,4 @@
-package berlin.yuna.system.logic;
+package berlin.yuna.clu.logic;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -10,8 +10,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.io.File;
 import java.nio.file.Paths;
 
-import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.LINUX;
-import static berlin.yuna.system.logic.SystemUtil.OperatingSystem.WINDOWS;
+import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.LINUX;
+import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.WINDOWS;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;

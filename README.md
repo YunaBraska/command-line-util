@@ -7,7 +7,7 @@
 [![Gitter][Gitter-image]][Gitter-Url] 
 
 ### Description
-System util to get easy access to command line
+System util to get easy access to command line unix/windows
 
 ![system-util](src/main/resources/banner.png "system-util")
 

@@ -9,7 +9,7 @@
     <packaging>jar</packaging>
 
     <name>${project.artifactId}</name>
-    <description>System util to get easy access to command line unix/windows</description>
+    <description>Command-line-util to get easy access to command line unix/windows</description>
     <url>${git-project.url}</url>
 
     <developers>
@@ -31,7 +31,7 @@
         <parent-project.encoding>UTF-8</parent-project.encoding>
         <project.build.sourceEncoding>${parent-project.encoding}</project.build.sourceEncoding>
         <project.reporting.outputEncoding>${parent-project.encoding}</project.reporting.outputEncoding>
-        <git-project.url>https://github.com/YunaBraska/system-util</git-project.url>
+        <git-project.url>https://github.com/YunaBraska/command-line-util</git-project.url>
     </properties>
 
     <dependencies>

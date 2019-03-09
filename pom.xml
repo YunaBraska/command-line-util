@@ -5,11 +5,11 @@
 
     <groupId>berlin.yuna</groupId>
     <artifactId>command-line-util</artifactId>
-    <version>0.0.4</version>
+    <version>0.0.1</version>
     <packaging>jar</packaging>
 
     <name>${project.artifactId}</name>
-    <description>Command-line-util to get easy access to command line unix/windows</description>
+    <description>Simple Command-line-util to get easy access to command line unix/windows - native without any dependencies</description>
     <url>${git-project.url}</url>
 
     <developers>

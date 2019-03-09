@@ -7,7 +7,8 @@
 [![Gitter][Gitter-image]][Gitter-Url] 
 
 ### Description
-Command-line-util to get easy access to command line unix/windows
+Simple Command-line-util to get easy access to command line unix/windows - native without any dependencies
+For more professional you can use [plexus-utils](https://github.com/sonatype/plexus-utils/tree/master/src/main/java/org/codehaus/plexus/util/cli) containing cli
 
 ### [Example] Execute command
 ````java

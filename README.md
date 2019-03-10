@@ -12,6 +12,7 @@ For more professional you can use [plexus-utils](https://github.com/sonatype/ple
 
 ### \[Example\] Parsing command line
 ````java
+//it extends a HashMap
 final CommandLineReader cmdLines = new CommandLineReader("command_1 command_2 --help -v=\"true\" --verbose=\"true\" -list=\"item 1\" --list=\"item 2\" --list=\"-item 3\"  ");
     cmdLines.isPresent("hElp"); //returns true (caseInsensitive)
     getValue("v", "verbose"); //returns "true"

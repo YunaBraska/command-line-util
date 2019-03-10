@@ -17,7 +17,7 @@ final CommandLineReader cmdLines = new CommandLineReader("command_1 command_2 --
     cmdLines.getCommand() //returns "command_1"
     cmdLines.getCommand(1) //returns "command_2"
     cmdLines.isPresent("hElp"); //returns true (caseInsensitive)
-    getValue("v", "verbose"); //returns "true"
+    cmdLines.getValue("v", "verbose"); //returns "true" (first value of both)
     cmdLines.getValue(1, "list"); //returns "item 2"
 ````
 

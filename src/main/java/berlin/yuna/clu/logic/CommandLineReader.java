@@ -2,7 +2,7 @@ package berlin.yuna.clu.logic;
 
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -112,7 +112,7 @@ public class CommandLineReader extends ConcurrentHashMap<String, List<String>> {
 
     @SuppressWarnings("unchecked")
     private List removeDuplicates(final List<String> result) {
-        return new ArrayList<>(new HashSet(result));
+        return new ArrayList<>(new LinkedHashSet<>(result));
     }
 
     private void parseCommandLine(final String input) {
@@ -121,14 +121,14 @@ public class CommandLineReader extends ConcurrentHashMap<String, List<String>> {
         for (String argument : (" " + process).split(" --| -")) {
             argument = argument.trim();
 
-            if(argument.isEmpty()){
+            if (argument.isEmpty()) {
                 continue;
             }
 
             final String[] arg = parseToKeyValue(argument);
 
             final String key = arg[0].trim().toLowerCase();
-            final String value = arg[1] == null? null : getStripedValue(arg[1]);
+            final String value = arg[1] == null ? null : getStripedValue(arg[1]);
 
             final List<String> valueList = new ArrayList<>(get(key));
             if (!containsIgnoreCase(valueList, value)) {
@@ -157,7 +157,7 @@ public class CommandLineReader extends ConcurrentHashMap<String, List<String>> {
     }
 
     private String getStripedValue(final String value) {
-        String result = value == null?  "" : value.trim();
+        String result = value == null ? "" : value.trim();
         if ((result.startsWith("\'") && result.endsWith("\'")) || result.startsWith("\"") && result.endsWith("\"")) {
             result = result.substring(1, result.length() - 1);
         }

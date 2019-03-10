@@ -55,6 +55,7 @@ public class CommandLineReaderTest {
         assertThat(cmdLines.getValues("DArgList"), hasItem("item 1"));
         assertThat(cmdLines.getValues("DArgList"), hasItem("item 2"));
         assertThat(cmdLines.getValues("DArgList"), hasItem("-item 3"));
+        assertThat(cmdLines.getValue(2, "DArgList"), is(equalTo("-item 3")));
         assertThat(cmdLines.getValue(3, "DArgList"), is(nullValue()));
 
         assertThat(cmdLines.getValue("param"), is(notNullValue()));

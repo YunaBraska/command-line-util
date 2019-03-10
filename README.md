@@ -7,10 +7,18 @@
 [![Gitter][Gitter-image]][Gitter-Url] 
 
 ### Description
-Simple Command-line-util to get easy access to command line unix/windows - native without any dependencies
-For more professional you can use [plexus-utils](https://github.com/sonatype/plexus-utils/tree/master/src/main/java/org/codehaus/plexus/util/cli) containing cli
+Command-line-util to get easy access to command line unix/windows - simple and native without any dependencies
+For more professional you can use [plexus-utils](https://github.com/sonatype/plexus-utils/tree/master/src/main/java/org/codehaus/plexus/util/cli) [commons-cli](https://commons.apache.org/proper/commons-cli/)
 
-### [Example] Execute command
+### \[Example\] Parsing command line
+````java
+final CommandLineReader cmdLines = new CommandLineReader("command_1 command_2 --help -v=\"true\" --verbose=\"true\" -list=\"item 1\" --list=\"item 2\" --list=\"-item 3\"  ");
+    cmdLines.isPresent("hElp"); //returns true (caseInsensitive)
+    getValue("v", "verbose"); //returns "true"
+    cmdLines.getValue(1, "list"); //returns "item 2"
+````
+
+### \[Example\] Terminal execute command
 ````java
 new Terminal()
     .consumerInfo(System.out::println) //optional listener [Consumer<String>]
@@ -24,7 +32,7 @@ new Terminal()
     .execute("echo Howdy") //executes the command
     .process //optional returns java Process;
 ````
-### [Example] Operating system tools
+### \[Example\] Operating system tools
 ````java
 //Enum [ARM, LINUX, MAC, WINDOWS, SOLARIS, UNKNOWN]
 OperatingSystem os = SystemUtil.getOsType();

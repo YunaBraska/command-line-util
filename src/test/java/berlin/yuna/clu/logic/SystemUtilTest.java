@@ -159,9 +159,7 @@ public class SystemUtilTest {
 
     @Test
     public void fixFilePermissions_onRootFolder_shouldFailAndReturnFalse() {
-        final Path path = Paths.get("/");
-        System.out.println(path.toString());
-        assertThat(SystemUtil.setFilePermissions(path, OTHERS_WRITE), is(false));
+        assertThat(SystemUtil.setFilePermissions(Paths.get("/"), OTHERS_WRITE), is(false));
     }
 
     @Test

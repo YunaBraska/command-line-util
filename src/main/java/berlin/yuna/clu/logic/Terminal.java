@@ -21,9 +21,10 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class Terminal {
 
     private Process process;
-    private StringBuilder consoleInfo = new StringBuilder();
-    private StringBuilder consoleError = new StringBuilder();
+    private final StringBuilder consoleInfo = new StringBuilder();
+    private final StringBuilder consoleError = new StringBuilder();
 
+    private final Logger LOG;
     private int status = 0;
     private long timeoutMs = -1;
     private boolean breakOnError = true;
@@ -31,14 +32,18 @@ public class Terminal {
     private final List<Consumer<String>> consumerInfo = new ArrayList<>();
     private final List<Consumer<String>> consumerError = new ArrayList<>();
 
-    private static final Logger LOG = getLogger(Terminal.class);
     private static final OperatingSystem OS_TYPE = SystemUtil.getOsType();
 
-    public Terminal() {
+    public Terminal(final Class<?> clazz) {
+        LOG = getLogger(clazz == null ? Terminal.class : clazz);
         consumerInfo.add(LOG::info);
         consumerError.add(LOG::error);
         consumerInfo.add(consoleInfo::append);
         consumerError.add(consoleError::append);
+    }
+
+    public Terminal() {
+        this(null);
     }
 
     /**
@@ -47,8 +52,8 @@ public class Terminal {
      * @return Terminal
      */
     public Terminal clearConsole() {
-        consoleInfo = new StringBuilder();
-        consoleError = new StringBuilder();
+        consoleInfo.setLength(0);
+        consoleError.setLength(0);
         return this;
     }
 
@@ -182,7 +187,7 @@ public class Terminal {
             process = process(command);
             if (timeoutMs == -1L) {
                 status = process.waitFor();
-                LOG.debug("Terminal status [{}]", status);
+                LOG.trace("Terminal status [{}]", status);
             } else {
                 waitFor(command);
             }

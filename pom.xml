@@ -112,6 +112,11 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>berlin.yuna</groupId>
+                <artifactId>deployment-maven-plugin</artifactId>
+                <version>0.0.1</version>
+            </plugin>
         </plugins>
     </build>
 

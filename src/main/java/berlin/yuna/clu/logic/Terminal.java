@@ -3,7 +3,6 @@ package berlin.yuna.clu.logic;
 
 import berlin.yuna.clu.logic.SystemUtil.OperatingSystem;
 import berlin.yuna.clu.util.StreamGobbler;
-import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,7 +14,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 import static java.util.Arrays.asList;
-import static org.slf4j.LoggerFactory.getLogger;
 
 
 public class Terminal {
@@ -24,7 +22,6 @@ public class Terminal {
     private final StringBuilder consoleInfo = new StringBuilder();
     private final StringBuilder consoleError = new StringBuilder();
 
-    private final Logger LOG;
     private int status = 0;
     private long timeoutMs = -1;
     private boolean breakOnError = true;
@@ -34,16 +31,9 @@ public class Terminal {
 
     private static final OperatingSystem OS_TYPE = SystemUtil.getOsType();
 
-    public Terminal(final Class<?> clazz) {
-        LOG = getLogger(clazz == null ? Terminal.class : clazz);
-        consumerInfo.add(LOG::info);
-        consumerError.add(LOG::error);
+    public Terminal() {
         consumerInfo.add(consoleInfo::append);
         consumerError.add(consoleError::append);
-    }
-
-    public Terminal() {
-        this(null);
     }
 
     /**
@@ -187,7 +177,6 @@ public class Terminal {
             process = process(command);
             if (timeoutMs == -1L) {
                 status = process.waitFor();
-                LOG.trace("Terminal status [{}]", status);
             } else {
                 waitFor(command);
             }

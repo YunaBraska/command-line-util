@@ -24,7 +24,7 @@ public class Terminal {
 
     private int status = 0;
     private long timeoutMs = -1;
-    private boolean breakOnError = true;
+    private boolean breakOnError = false;
     private File dir = new File(System.getProperty("user.dir"));
     private final List<Consumer<String>> consumerInfo = new ArrayList<>();
     private final List<Consumer<String>> consumerError = new ArrayList<>();
@@ -34,6 +34,20 @@ public class Terminal {
     public Terminal() {
         consumerInfo.add(consoleInfo::append);
         consumerError.add(consoleError::append);
+    }
+
+    /**
+     * Clean copy of terminal with default consumer and clean console log
+     * @param terminal terminal to copy
+     * @return new terminal copy
+     */
+    public static Terminal copyOf(final Terminal terminal){
+        Terminal term = new Terminal();
+        term.breakOnError(terminal.breakOnError);
+        term.timeoutMs(terminal.timeoutMs);
+        term.status = terminal.status;
+        term.dir(terminal.dir);
+        return term;
     }
 
     /**
@@ -180,6 +194,12 @@ public class Terminal {
             } else {
                 waitFor(command);
             }
+            waitForConsoleOutput();
+            if (breakOnError && (status != 0 || !consoleError.toString().isEmpty())) {
+                throw new IllegalStateException("[" + dir.getName() + "] [" + command + "] " + consoleError.toString());
+            } else if (!consoleError.toString().isEmpty()) {
+                status = status != 0 ? status : 2;
+            }
             return this;
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
@@ -234,16 +254,17 @@ public class Terminal {
         if ((System.currentTimeMillis() - startTime) > timeoutMs) {
             throw new RuntimeException(new TimeoutException("Execution got timed out [" + command + "]"));
         }
-
-        if (breakOnError && !consoleError.toString().isEmpty()) {
-            throw new IllegalStateException("[" + dir.getName() + "] [" + command + "] " + consoleError.toString());
-        } else if (!consoleError.toString().isEmpty()) {
-            status = 2;
-        }
     }
 
     private int countTerminalMessages() {
         return consoleInfo.length() + consoleError.length();
     }
 
+    protected void waitForConsoleOutput() throws InterruptedException {
+        int count;
+        do {
+            count = countTerminalMessages();
+            Thread.sleep(128);
+        } while (count != countTerminalMessages());
+    }
 }

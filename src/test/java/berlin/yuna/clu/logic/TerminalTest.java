@@ -80,7 +80,7 @@ public class TerminalTest {
     public void execute_withWrongCommandAndTimeout_shouldThrowException() {
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("not found");
-        terminal.timeoutMs(256).execute("invalidCommand");
+        terminal.timeoutMs(256).breakOnError(true).execute("invalidCommand");
     }
 
     @Test
@@ -106,7 +106,7 @@ public class TerminalTest {
 
     @Test
     public void settingBreakOnError_ShouldBeSuccessful() {
-        assertThat(terminal.breakOnError(), is(true));
+        assertThat(terminal.breakOnError(), is(false));
         assertThat(terminal.breakOnError(false).breakOnError(), is(false));
     }
 
@@ -141,4 +141,22 @@ public class TerminalTest {
         assertThat(console, not(containsString("aa")));
     }
 
+    @Test
+    public void copyOf_shouldCopyTerminal() {
+        final Terminal input = new Terminal();
+        input.execute("echo \"Howdy\"");
+        input.dir("inputDir");
+        input.timeoutMs(256);
+        final Terminal output = Terminal.copyOf(input);
+
+        assertThat(input, is(not(equalTo(output))));
+        assertThat(input.dir().toString(), is(containsString("inputDir")));
+        assertThat(input.dir().toString(), is(equalTo(output.dir().toString())));
+        assertThat(input.status(), is(equalTo(output.status())));
+        assertThat(input.status(), is(equalTo(output.status())));
+        assertThat(input.timeoutMs(), is(equalTo(output.timeoutMs())));
+        assertThat(input.breakOnError(), is(equalTo(output.breakOnError())));
+        assertThat((input.consoleInfo() + input.consoleError()).length(),
+                is(not((output.consoleInfo() + output.consoleError()).length())));
+    }
 }

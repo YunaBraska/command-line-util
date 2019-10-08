@@ -210,14 +210,14 @@ public class Terminal {
      * @return returns the console output
      */
     public String consoleInfo() {
-        return commandOutput.consoleInfo.toString() + tmpOutput.consoleInfo.toString();
+        return commandOutput.consoleInfo() + tmpOutput.consoleInfo();
     }
 
     /**
      * @return returns the console error output
      */
     public String consoleError() {
-        return commandOutput.consoleError.toString() + tmpOutput.consoleError.toString();
+        return commandOutput.consoleError() + tmpOutput.consoleError();
     }
 
     /**
@@ -251,7 +251,7 @@ public class Terminal {
             }
 
             waitForConsoleOutput(waitForMs <= 0 ? 256 : waitForMs);
-            final String error = tmpOutput.consoleError.toString();
+            final String error = tmpOutput.consoleError();
             final boolean errorOccurred = clearTmpOutput();
             if (breakOnError && (status != 0 || errorOccurred)) {
                 throw new IllegalStateException("[" + dir.getName() + "] [" + command + "] " + error);
@@ -330,8 +330,8 @@ public class Terminal {
     }
 
     private boolean clearTmpOutput() {
-        final boolean errorOccurred = !tmpOutput.consoleError.toString().isEmpty();
-        commandOutput.consoleInfo(tmpOutput.consoleInfo.toString());
+        final boolean errorOccurred = !tmpOutput.consoleError().isEmpty();
+        commandOutput.consoleInfo(tmpOutput.consoleInfo.toArray(String[]::new));
         if (errorOccurred) {
             commandOutput.consoleError(tmpOutput.consoleError.toArray(String[]::new));
         } else {

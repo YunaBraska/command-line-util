@@ -143,7 +143,7 @@ public class TerminalTest {
 
     @Test
     public void copyOf_shouldCopyTerminal() {
-        final Terminal input = new Terminal();
+        final Terminal input = new Terminal().waitFor(128);
         input.execute("echo \"Howdy\"");
         input.dir("inputDir");
         input.timeoutMs(256);
@@ -155,6 +155,7 @@ public class TerminalTest {
         assertThat(input.status(), is(equalTo(output.status())));
         assertThat(input.status(), is(equalTo(output.status())));
         assertThat(input.timeoutMs(), is(equalTo(output.timeoutMs())));
+        assertThat(input.waitFor(), is(equalTo(output.waitFor())));
         assertThat(input.breakOnError(), is(equalTo(output.breakOnError())));
         assertThat((input.consoleInfo() + input.consoleError()).length(),
                 is(not((output.consoleInfo() + output.consoleError()).length())));

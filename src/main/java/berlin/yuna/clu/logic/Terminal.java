@@ -19,33 +19,47 @@ import static java.util.Arrays.asList;
 public class Terminal {
 
     private Process process;
-    private final StringBuilder consoleInfo = new StringBuilder();
-    private final StringBuilder consoleError = new StringBuilder();
+
+    private final CommandOutput commandOutput = new CommandOutput();
+    private final CommandOutput tmpOutput = new CommandOutput();
 
     private int status = 0;
     private long timeoutMs = -1;
+    private long waitForMs = 256;
     private boolean breakOnError = false;
     private File dir = new File(System.getProperty("user.dir"));
-    private final List<Consumer<String>> consumerInfo = new ArrayList<>();
-    private final List<Consumer<String>> consumerError = new ArrayList<>();
 
     private static final OperatingSystem OS_TYPE = SystemUtil.getOsType();
 
+    public static class CommandOutput {
+        final StringBuilder consoleInfo = new StringBuilder();
+        final StringBuilder consoleError = new StringBuilder();
+        final List<Consumer<String>> consumerInfo = new ArrayList<>();
+        final List<Consumer<String>> consumerError = new ArrayList<>();
+
+        void clear() {
+            consoleInfo.setLength(0);
+            consoleError.setLength(0);
+        }
+    }
+
     public Terminal() {
-        consumerInfo.add(consoleInfo::append);
-        consumerError.add(consoleError::append);
+        tmpOutput.consumerInfo.add(tmpOutput.consoleInfo::append);
+        tmpOutput.consumerError.add(tmpOutput.consoleError::append);
     }
 
     /**
      * Clean copy of terminal with default consumer and clean console log
+     *
      * @param terminal terminal to copy
      * @return new terminal copy
      */
-    public static Terminal copyOf(final Terminal terminal){
-        Terminal term = new Terminal();
+    public static Terminal copyOf(final Terminal terminal) {
+        final Terminal term = new Terminal();
         term.breakOnError(terminal.breakOnError);
         term.timeoutMs(terminal.timeoutMs);
         term.status = terminal.status;
+        term.waitForMs = terminal.waitForMs;
         term.dir(terminal.dir);
         return term;
     }
@@ -56,8 +70,8 @@ public class Terminal {
      * @return Terminal
      */
     public Terminal clearConsole() {
-        consoleInfo.setLength(0);
-        consoleError.setLength(0);
+        commandOutput.clear();
+        tmpOutput.clear();
         return this;
     }
 
@@ -67,7 +81,7 @@ public class Terminal {
      */
     @SafeVarargs
     public final Terminal consumerInfo(final Consumer<String>... consumerInfo) {
-        this.consumerInfo.addAll(asList(consumerInfo));
+        this.tmpOutput.consumerInfo.addAll(asList(consumerInfo));
         return this;
     }
 
@@ -77,7 +91,7 @@ public class Terminal {
      */
     @SafeVarargs
     public final Terminal consumerError(final Consumer<String>... consumerError) {
-        this.consumerError.addAll(asList(consumerError));
+        this.tmpOutput.consumerError.addAll(asList(consumerError));
         return this;
     }
 
@@ -131,6 +145,23 @@ public class Terminal {
     }
 
     /**
+     * @return wait time after command exited
+     * @see Terminal#execute(String, long)
+     */
+    public long waitFor() {
+        return waitForMs;
+    }
+
+    /**
+     * @return set ms to wait after execution if the command is faster than logging its messages (default=256)
+     * @see Terminal#execute(String, long)
+     */
+    public Terminal waitFor(final long waitForMs) {
+        this.waitForMs = waitForMs;
+        return this;
+    }
+
+    /**
      * @param dir sets the working directory
      * @return Terminal
      */
@@ -168,14 +199,14 @@ public class Terminal {
      * @return returns the console output
      */
     public String consoleInfo() {
-        return consoleInfo.toString();
+        return commandOutput.consoleInfo.toString() + tmpOutput.consoleInfo.toString();
     }
 
     /**
      * @return returns the console error output
      */
     public String consoleError() {
-        return consoleError.toString();
+        return commandOutput.consoleError.toString() + tmpOutput.consoleError.toString();
     }
 
     /**
@@ -187,6 +218,19 @@ public class Terminal {
      * @return a new {@link Process} object for managing the sub process
      */
     public Terminal execute(final String command) {
+        return execute(command, waitForMs);
+    }
+
+    /**
+     * Executes a command with (sh or cmd.exe) ant he help of the {@link ProcessBuilder}
+     * Default working directory: user.dir
+     * {@link Terminal#timeoutMs(long)} if timeout is needed
+     *
+     * @param command   command to execute
+     * @param waitForMs overwrites default {@link Terminal#waitFor(long)} for this call
+     * @return a new {@link Process} object for managing the sub process
+     */
+    public Terminal execute(final String command, final long waitForMs) {
         try {
             process = process(command);
             if (timeoutMs == -1L) {
@@ -194,10 +238,13 @@ public class Terminal {
             } else {
                 waitFor(command);
             }
-            waitForConsoleOutput();
-            if (breakOnError && (status != 0 || !consoleError.toString().isEmpty())) {
-                throw new IllegalStateException("[" + dir.getName() + "] [" + command + "] " + consoleError.toString());
-            } else if (!consoleError.toString().isEmpty()) {
+
+            waitForConsoleOutput(waitForMs <= 0 ? 256 : waitForMs);
+            final String error = tmpOutput.consoleError.toString();
+            final boolean errorOccurred = clearTmpOutput();
+            if (breakOnError && (status != 0 || errorOccurred)) {
+                throw new IllegalStateException("[" + dir.getName() + "] [" + command + "] " + error);
+            } else if (errorOccurred) {
                 status = status != 0 ? status : 2;
             }
             return this;
@@ -207,7 +254,7 @@ public class Terminal {
     }
 
     /**
-     * Executes a command with (sh or cmd.exe) ant he help of the {@link ProcessBuilder}
+     * Executes a command with (sh or cmd.exe) with the help of the {@link ProcessBuilder}
      *
      * @param command command to execute
      * @return a new {@link Process} object for managing the sub process
@@ -220,8 +267,8 @@ public class Terminal {
         builder.command(addExecutor(OS_TYPE, command));
         final Process process = builder.start();
 
-        Executors.newSingleThreadExecutor().submit(new StreamGobbler(process.getInputStream(), consumerInfo));
-        Executors.newSingleThreadExecutor().submit(new StreamGobbler(process.getErrorStream(), consumerError));
+        Executors.newSingleThreadExecutor().submit(new StreamGobbler(process.getInputStream(), tmpOutput.consumerInfo));
+        Executors.newSingleThreadExecutor().submit(new StreamGobbler(process.getErrorStream(), tmpOutput.consumerError));
 
         return process;
     }
@@ -257,14 +304,26 @@ public class Terminal {
     }
 
     private int countTerminalMessages() {
-        return consoleInfo.length() + consoleError.length();
+        return consoleInfo().length() + consoleError().length();
     }
 
-    protected void waitForConsoleOutput() throws InterruptedException {
+    private void waitForConsoleOutput(final long waitForMs) throws InterruptedException {
         int count;
         do {
             count = countTerminalMessages();
-            Thread.sleep(128);
+            Thread.sleep(waitForMs);
         } while (count != countTerminalMessages());
+    }
+
+    private boolean clearTmpOutput() {
+        final boolean errorOccurred = !tmpOutput.consoleError.toString().isEmpty();
+        commandOutput.consoleInfo.append(tmpOutput.consoleInfo);
+        if (errorOccurred) {
+            commandOutput.consoleError.append(tmpOutput.consoleError);
+        } else {
+            commandOutput.consoleInfo.append(tmpOutput.consoleError);
+        }
+        tmpOutput.clear();
+        return errorOccurred;
     }
 }

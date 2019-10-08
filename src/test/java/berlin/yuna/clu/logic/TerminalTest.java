@@ -146,6 +146,7 @@ public class TerminalTest {
         final Terminal input = new Terminal().waitFor(128);
         input.execute("echo \"Howdy\"");
         input.dir("inputDir");
+        input.consumerErrorCode(System.err::println);
         input.timeoutMs(256);
         final Terminal output = Terminal.copyOf(input);
 

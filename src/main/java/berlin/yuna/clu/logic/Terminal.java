@@ -28,6 +28,7 @@ public class Terminal {
     private long waitForMs = 256;
     private boolean breakOnError = false;
     private File dir = new File(System.getProperty("user.dir"));
+    private final List<Consumer<String>> consumerErrorExit = new ArrayList<>();
 
     private static final OperatingSystem OS_TYPE = SystemUtil.getOsType();
 
@@ -76,7 +77,7 @@ public class Terminal {
     }
 
     /**
-     * @param consumerInfo consumer for console info output
+     * @param consumerInfo consumer for console info stream
      * @return Terminal
      */
     @SafeVarargs
@@ -86,11 +87,21 @@ public class Terminal {
     }
 
     /**
-     * @param consumerError consumer for console error output
+     * @param consumerError consumer for console error stream
      * @return Terminal
      */
     @SafeVarargs
     public final Terminal consumerError(final Consumer<String>... consumerError) {
+        this.consumerErrorExit.addAll(asList(consumerError));
+        return this;
+    }
+
+    /**
+     * @param consumerError consumer for console exit code errors
+     * @return Terminal
+     */
+    @SafeVarargs
+    public final Terminal consumerErrorCode(final Consumer<String>... consumerError) {
         this.tmpOutput.consumerError.addAll(asList(consumerError));
         return this;
     }
@@ -319,6 +330,7 @@ public class Terminal {
         final boolean errorOccurred = !tmpOutput.consoleError.toString().isEmpty();
         commandOutput.consoleInfo.append(tmpOutput.consoleInfo);
         if (errorOccurred) {
+            consumerErrorExit.forEach(c -> c.accept(tmpOutput.consoleError.toString()));
             commandOutput.consoleError.append(tmpOutput.consoleError);
         } else {
             commandOutput.consoleInfo.append(tmpOutput.consoleError);

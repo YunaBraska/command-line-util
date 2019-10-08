@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
@@ -34,8 +35,8 @@ public class Terminal {
     private static final OperatingSystem OS_TYPE = SystemUtil.getOsType();
 
     public Terminal() {
-        tmpOutput.consumerInfo.add(tmpOutput.consoleInfo::append);
-        tmpOutput.consumerError.add(tmpOutput.consoleError::append);
+        tmpOutput.consumerInfo.add(tmpOutput.consoleInfo::add);
+        tmpOutput.consumerError.add(tmpOutput.consoleError::add);
     }
 
     /**
@@ -314,10 +315,10 @@ public class Terminal {
     }
 
     public int countTerminalMessages() {
-        return commandOutput.consoleInfo.length()
-                + commandOutput.consoleError.length()
-                + tmpOutput.consoleInfo.length()
-                + tmpOutput.consoleError.length();
+        return commandOutput.consoleInfo.size()
+                + commandOutput.consoleError.size()
+                + tmpOutput.consoleInfo.size()
+                + tmpOutput.consoleError.size();
     }
 
     private void waitForConsoleOutput(final long waitForMs) throws InterruptedException {
@@ -332,38 +333,46 @@ public class Terminal {
         final boolean errorOccurred = !tmpOutput.consoleError.toString().isEmpty();
         commandOutput.consoleInfo(tmpOutput.consoleInfo.toString());
         if (errorOccurred) {
-            commandOutput.consoleError(tmpOutput.consoleError.toString());
+            commandOutput.consoleError(tmpOutput.consoleError.toArray(String[]::new));
         } else {
-            commandOutput.consoleInfo(tmpOutput.consoleError.toString());
+            commandOutput.consoleInfo(tmpOutput.consoleError.toArray(String[]::new));
         }
         tmpOutput.clear();
         return errorOccurred;
     }
 
     public static class CommandOutput {
-        //TODO: List of TimeNs/String to merge easier non errors in error stream with info at clearTmpOutput
-        final StringBuilder consoleInfo = new StringBuilder();
-        final StringBuilder consoleError = new StringBuilder();
+        //TODO: List of TimeNs/CharSequence to merge easier non errors in error stream with info at clearTmpOutput
+        final List<String> consoleInfo = new ArrayList<>();
+        final List<String> consoleError = new ArrayList<>();
         final List<Consumer<String>> consumerInfo = new ArrayList<>();
         final List<Consumer<String>> consumerError = new ArrayList<>();
 
+        String consoleInfo() {
+            return String.join("", consoleInfo);
+        }
+
+        String consoleError() {
+            return String.join("", consoleError);
+        }
+
         void consoleInfo(final String... string) {
             stream(string).forEach(s -> {
-                consoleInfo.append(s);
+                consoleInfo.add(s);
                 consumerInfo.forEach(c -> c.accept(s));
             });
         }
 
         void consoleError(final String... string) {
             stream(string).forEach(s -> {
-                consoleError.append(s);
+                consoleError.add(s);
                 consumerError.forEach(c -> c.accept(s));
             });
         }
 
         void clear() {
-            consoleInfo.setLength(0);
-            consoleError.setLength(0);
+            consoleInfo.clear();
+            consoleError.clear();
         }
     }
 }

@@ -15,6 +15,7 @@ import java.util.function.Consumer;
 
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
+import static java.util.Collections.singletonList;
 
 
 public class Terminal {
@@ -276,8 +277,8 @@ public class Terminal {
         builder.command(addExecutor(OS_TYPE, command));
         final Process process = builder.start();
 
-        Executors.newSingleThreadExecutor().submit(new StreamGobbler(process.getInputStream(), tmpOutput.consumerInfo));
-        Executors.newSingleThreadExecutor().submit(new StreamGobbler(process.getErrorStream(), tmpOutput.consumerError));
+        Executors.newSingleThreadExecutor().submit(new StreamGobbler(process.getInputStream(), singletonList(tmpOutput::consoleInfo)));
+        Executors.newSingleThreadExecutor().submit(new StreamGobbler(process.getErrorStream(), singletonList(tmpOutput::consoleError)));
 
         return process;
     }

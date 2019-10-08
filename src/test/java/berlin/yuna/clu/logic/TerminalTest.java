@@ -120,8 +120,8 @@ public class TerminalTest {
 
     @Test
     public void addConsumerInfo_ShouldBeSuccessful() {
-        assertThat(terminal.consumerInfo(System.out::println), is(notNullValue()));
-        assertThat(terminal.consumerError(System.err::println), is(notNullValue()));
+        assertThat(terminal.consumerInfoStream(System.out::println), is(notNullValue()));
+        assertThat(terminal.consumerErrorStream(System.err::println), is(notNullValue()));
         terminal.execute("echo \"Howdy\"");
         terminal.breakOnError(false).execute("invalidCommand");
     }
@@ -146,7 +146,8 @@ public class TerminalTest {
         final Terminal input = new Terminal().waitFor(128);
         input.execute("echo \"Howdy\"");
         input.dir("inputDir");
-        input.consumerErrorCode(System.err::println);
+        input.consumerInfoStream(System.out::println);
+        input.consumerErrorStream(System.err::println);
         input.timeoutMs(256);
         final Terminal output = Terminal.copyOf(input);
 

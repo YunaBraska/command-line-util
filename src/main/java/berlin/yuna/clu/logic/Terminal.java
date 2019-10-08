@@ -14,6 +14,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 import static java.util.Arrays.asList;
+import static java.util.Arrays.stream;
 
 
 public class Terminal {
@@ -28,21 +29,8 @@ public class Terminal {
     private long waitForMs = 256;
     private boolean breakOnError = false;
     private File dir = new File(System.getProperty("user.dir"));
-    private final List<Consumer<String>> consumerErrorExit = new ArrayList<>();
 
     private static final OperatingSystem OS_TYPE = SystemUtil.getOsType();
-
-    public static class CommandOutput {
-        final StringBuilder consoleInfo = new StringBuilder();
-        final StringBuilder consoleError = new StringBuilder();
-        final List<Consumer<String>> consumerInfo = new ArrayList<>();
-        final List<Consumer<String>> consumerError = new ArrayList<>();
-
-        void clear() {
-            consoleInfo.setLength(0);
-            consoleError.setLength(0);
-        }
-    }
 
     public Terminal() {
         tmpOutput.consumerInfo.add(tmpOutput.consoleInfo::append);
@@ -81,7 +69,7 @@ public class Terminal {
      * @return Terminal
      */
     @SafeVarargs
-    public final Terminal consumerInfo(final Consumer<String>... consumerInfo) {
+    public final Terminal consumerInfoStream(final Consumer<String>... consumerInfo) {
         this.tmpOutput.consumerInfo.addAll(asList(consumerInfo));
         return this;
     }
@@ -91,8 +79,18 @@ public class Terminal {
      * @return Terminal
      */
     @SafeVarargs
-    public final Terminal consumerError(final Consumer<String>... consumerError) {
-        this.consumerErrorExit.addAll(asList(consumerError));
+    public final Terminal consumerErrorStream(final Consumer<String>... consumerError) {
+        this.tmpOutput.consumerError.addAll(asList(consumerError));
+        return this;
+    }
+
+    /**
+     * @param consumerError consumer for console exit code info
+     * @return Terminal
+     */
+    @SafeVarargs
+    public final Terminal consumerInfo(final Consumer<String>... consumerError) {
+        this.commandOutput.consumerInfo.addAll(asList(consumerError));
         return this;
     }
 
@@ -101,8 +99,8 @@ public class Terminal {
      * @return Terminal
      */
     @SafeVarargs
-    public final Terminal consumerErrorCode(final Consumer<String>... consumerError) {
-        this.tmpOutput.consumerError.addAll(asList(consumerError));
+    public final Terminal consumerError(final Consumer<String>... consumerError) {
+        this.commandOutput.consumerError.addAll(asList(consumerError));
         return this;
     }
 
@@ -314,8 +312,11 @@ public class Terminal {
         }
     }
 
-    private int countTerminalMessages() {
-        return consoleInfo().length() + consoleError().length();
+    public int countTerminalMessages() {
+        return commandOutput.consoleInfo.length()
+                + commandOutput.consoleError.length()
+                + tmpOutput.consoleInfo.length()
+                + tmpOutput.consoleError.length();
     }
 
     private void waitForConsoleOutput(final long waitForMs) throws InterruptedException {
@@ -328,14 +329,40 @@ public class Terminal {
 
     private boolean clearTmpOutput() {
         final boolean errorOccurred = !tmpOutput.consoleError.toString().isEmpty();
-        commandOutput.consoleInfo.append(tmpOutput.consoleInfo);
+        commandOutput.consoleInfo(tmpOutput.consoleInfo.toString());
         if (errorOccurred) {
-            consumerErrorExit.forEach(c -> c.accept(tmpOutput.consoleError.toString()));
-            commandOutput.consoleError.append(tmpOutput.consoleError);
+            commandOutput.consoleError(tmpOutput.consoleError.toString());
         } else {
-            commandOutput.consoleInfo.append(tmpOutput.consoleError);
+            commandOutput.consoleInfo(tmpOutput.consoleError.toString());
         }
         tmpOutput.clear();
         return errorOccurred;
+    }
+
+    public static class CommandOutput {
+        //TODO: List of TimeNs/String to merge easier non errors in error stream with info at clearTmpOutput
+        final StringBuilder consoleInfo = new StringBuilder();
+        final StringBuilder consoleError = new StringBuilder();
+        final List<Consumer<String>> consumerInfo = new ArrayList<>();
+        final List<Consumer<String>> consumerError = new ArrayList<>();
+
+        void consoleInfo(final String... string) {
+            stream(string).forEach(s -> {
+                consoleInfo.append(s);
+                consumerInfo.forEach(c -> c.accept(s));
+            });
+        }
+
+        void consoleError(final String... string) {
+            stream(string).forEach(s -> {
+                consoleError.append(s);
+                consumerError.forEach(c -> c.accept(s));
+            });
+        }
+
+        void clear() {
+            consoleInfo.setLength(0);
+            consoleError.setLength(0);
+        }
     }
 }

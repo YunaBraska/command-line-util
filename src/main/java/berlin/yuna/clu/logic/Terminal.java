@@ -243,18 +243,16 @@ public class Terminal {
         try {
             process = process(command);
             if (timeoutMs == -1L) {
-                status = process.waitFor();
+                process.waitFor();
             } else {
                 waitFor(command);
             }
 
             waitForConsoleOutput(waitForMs <= 0 ? 256 : waitForMs);
             final String error = tmpOutput.consoleError();
-            final boolean errorOccurred = clearTmpOutput();
-            if (breakOnError && (status != 0 || errorOccurred)) {
+            status = clearTmpOutput();
+            if (breakOnError && status != 0) {
                 throw new IllegalStateException("[" + dir.getName() + "] [" + command + "] " + error);
-            } else if (errorOccurred) {
-                status = status != 0 ? status : 2;
             }
             return this;
         } catch (IOException | InterruptedException e) {
@@ -327,16 +325,16 @@ public class Terminal {
         } while (count != countTerminalMessages());
     }
 
-    private boolean clearTmpOutput() {
-        final boolean errorOccurred = !tmpOutput.consoleError().isEmpty();
+    private int clearTmpOutput() {
+        final int status = process.exitValue();
         commandOutput.consoleInfo(tmpOutput.consoleInfo.toArray(String[]::new));
-        if (errorOccurred) {
+        if (status > 0) {
             commandOutput.consoleError(tmpOutput.consoleError.toArray(String[]::new));
         } else {
             commandOutput.consoleInfo(tmpOutput.consoleError.toArray(String[]::new));
         }
         tmpOutput.clear();
-        return errorOccurred;
+        return status;
     }
 
     public static class CommandOutput {

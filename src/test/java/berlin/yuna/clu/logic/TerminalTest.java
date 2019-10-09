@@ -86,7 +86,7 @@ public class TerminalTest {
     @Test
     public void execute_withWrongCommandAndTimeoutAndBreakOnErrorFalse_shouldThrowException() {
         terminal.timeoutMs(256).breakOnError(false).execute("invalidCommand");
-        assertThat(terminal.status(), is(2));
+        assertThat(terminal.status(), is(not(0)));
         assertThat(terminal.consoleError(), containsString("invalidCommand"));
         assertThat(terminal.consoleError(), containsString("not found"));
     }

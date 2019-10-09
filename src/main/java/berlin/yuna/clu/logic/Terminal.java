@@ -35,8 +35,6 @@ public class Terminal {
     private static final OperatingSystem OS_TYPE = SystemUtil.getOsType();
 
     public Terminal() {
-        tmpOutput.consumerInfo.add(tmpOutput.consoleInfo::add);
-        tmpOutput.consumerError.add(tmpOutput.consoleError::add);
     }
 
     /**

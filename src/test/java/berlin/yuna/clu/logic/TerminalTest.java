@@ -79,7 +79,7 @@ public class TerminalTest {
     @Test
     public void execute_withWrongCommandAndTimeout_shouldThrowException() {
         expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("not found");
+        expectedException.expectMessage("invalidCommand");
         terminal.timeoutMs(256).breakOnError(true).execute("invalidCommand");
     }
 

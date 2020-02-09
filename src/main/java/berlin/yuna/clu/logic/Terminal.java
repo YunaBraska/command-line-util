@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
@@ -247,6 +246,7 @@ public class Terminal {
             } else {
                 waitFor(command);
             }
+            process.onExit().thenApply(p -> clearTmpOutput());
 
             waitForConsoleOutput(waitForMs <= 0 ? 256 : waitForMs);
             final String error = tmpOutput.consoleError();
@@ -326,7 +326,12 @@ public class Terminal {
     }
 
     private int clearTmpOutput() {
-        final int status = process.exitValue();
+        int status;
+        try {
+            status = process.exitValue();
+        } catch (IllegalThreadStateException e) {
+            status = 0;
+        }
         commandOutput.consoleInfo(tmpOutput.consoleInfo.toArray(String[]::new));
         if (status > 0) {
             commandOutput.consoleError(tmpOutput.consoleError.toArray(String[]::new));

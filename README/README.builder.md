@@ -1,38 +1,8 @@
-# command-line-util
+[var target]: # (/)
 
-![Build][Build-shield] 
-[![Maintainable][Maintainable-image]][Maintainable-Url]
-[![Coverage][Coverage-image]][Coverage-Url]
-![Central][Central-shield] 
-![Tag][Tag-shield]
-![Issues][Issues-shield] 
-![Commit][Commit-shield] 
-![Size][Size-shield] 
-![Dependency][Dependency-shield]
-![License][License-shield]
-![Label][Label-shield]
+# !{project.name}
 
-[License-Url]: https://www.apache.org/licenses/LICENSE-2.0
-[Build-Status-Url]: https://travis-ci.org/YunaBraska/command-line-util
-[Build-Status-Image]: https://travis-ci.org/YunaBraska/command-line-util.svg?branch=master
-[Coverage-Url]: https://codecov.io/gh/YunaBraska/command-line-util?branch=master
-[Coverage-image]: https://img.shields.io/codecov/c/github/YunaBraska/command-line-util?style=flat-square
-[Maintainable-Url]: https://codeclimate.com/github/YunaBraska/command-line-util/maintainability
-[Maintainable-image]: https://img.shields.io/codeclimate/maintainability/YunaBraska/command-line-util?style=flat-square
-[Javadoc-url]: http://javadoc.io/doc/berlin.yuna/command-line-util
-[Javadoc-image]: http://javadoc.io/badge/berlin.yuna/command-line-util.svg
-[Gitter-Url]: https://gitter.im/nats-streaming-server-embedded/Lobby
-[Gitter-image]: https://img.shields.io/badge/gitter-join%20chat%20%E2%86%92-brightgreen.svg
-
-[Dependency-shield]: https://img.shields.io/librariesio/github/YunaBraska/command-line-util?style=flat-square
-[Tag-shield]: https://img.shields.io/github/v/tag/YunaBraska/command-line-util?style=flat-square
-[Central-shield]: https://img.shields.io/maven-central/v/berlin.yuna/command-line-util?style=flat-square
-[Size-shield]: https://img.shields.io/github/repo-size/YunaBraska/command-line-util?style=flat-square
-[Issues-shield]: https://img.shields.io/github/issues/YunaBraska/command-line-util?style=flat-square
-[License-shield]: https://img.shields.io/github/license/YunaBraska/command-line-util?style=flat-square
-[Commit-shield]: https://img.shields.io/github/last-commit/YunaBraska/command-line-util?style=flat-square
-[Label-shield]: https://img.shields.io/badge/Yuna-QueenInside-blueviolet?style=flat-square
-[Build-shield]: https://img.shields.io/travis/YunaBraska/command-line-util/master?style=flat-square
+[include]: # (/README/shields.include.md)
 
 ### Description
 Command-line-util to get easy access to command line unix/windows - simple and native without any dependencies

@@ -1,9 +1,11 @@
 language: java
+jdk:
+  - openjdk12
 sudo: false
-script: mvn clean verify
+script: sh scripts/test.sh
 
 after_success:
-  - bash <(curl -s https://codecov.io/bash) -t 1ece7af6-46e4-4b36-aba9-58417841b1c4
+  - bash <(curl -s https://codecov.io/bash) -t 95613817-25e8-4c02-89ca-ab6f67c62312
 env:
   global:
-    - CODECOV_TOKEN=:1ece7af6-46e4-4b36-aba9-58417841b1c4
+    - CODECOV_TOKEN=:95613817-25e8-4c02-89ca-ab6f67c62312

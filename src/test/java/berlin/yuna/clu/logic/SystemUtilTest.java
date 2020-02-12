@@ -54,6 +54,10 @@ public class SystemUtilTest {
         System.setProperty("os.name", "notRelevant");
         assertThat(SystemUtil.getOsType(), is(ARM));
         assertThat(SystemUtil.isArm(), is(true));
+        assertThat(SystemUtil.isMac(), is(false));
+        assertThat(SystemUtil.isLinux(), is(false));
+        assertThat(SystemUtil.isSolaris(), is(false));
+        assertThat(SystemUtil.isWindows(), is(false));
     }
 
     @Test
@@ -61,6 +65,7 @@ public class SystemUtilTest {
         System.setProperty("os.name", "linux");
         assertThat(SystemUtil.getOsType(), is(LINUX));
         assertThat(SystemUtil.isLinux(), is(true));
+        assertThat(SystemUtil.isArm(), is(false));
     }
 
     @Test

@@ -11,7 +11,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class CommandLineReaderTest {
 
-    private final String input = " myCommand1    myCommand2 --help  -v=\"true\" --verbose=\"true\"   -DArgs=\"true\" -param 42   54   -DArgList=\"item 1\" --DArgList=\"item 2\" --DArgList=\"-item 3\"  ";
+    private final String input = " myCommand1    myCommand2 --help  -v=\"true\" -v=\"true\" --verbose=\"true\"   -DArgs=\"true\" -param 42   54   -DArgList=\"item 1\" --DArgList=\"item 2\" --DArgList=\"-item 3\"  ";
+
+    @Test
+    public void parse_withEmptyString_shouldBeSuccessful() {
+        final CommandLineReader cmdLines = new CommandLineReader("");
+
+        assertThat(cmdLines.size(), is(0));
+    }
 
     @Test
     public void parse_withCommands_shouldBeSuccessful() {

@@ -2,6 +2,7 @@ package berlin.yuna.clu.logic;
 
 
 import berlin.yuna.clu.logic.SystemUtil.OperatingSystem;
+import berlin.yuna.clu.model.exception.TerminalExecutionException;
 import berlin.yuna.clu.util.StreamGobbler;
 
 import java.io.File;
@@ -10,7 +11,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 import static java.util.Arrays.asList;
@@ -18,6 +18,7 @@ import static java.util.Arrays.stream;
 import static java.util.Collections.singletonList;
 
 
+@SuppressWarnings("unused")
 public class Terminal {
 
     private Process process;
@@ -32,9 +33,6 @@ public class Terminal {
     private File dir = new File(System.getProperty("user.dir"));
 
     private static final OperatingSystem OS_TYPE = SystemUtil.getOsType();
-
-    public Terminal() {
-    }
 
     /**
      * Clean copy of terminal with default consumer and clean console log
@@ -256,7 +254,7 @@ public class Terminal {
             }
             return this;
         } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
+            throw new TerminalExecutionException("Unable to execute [" + command + "]", e);
         }
     }
 
@@ -306,7 +304,7 @@ public class Terminal {
         while ((count == 0 || count != (countTerminalMessages())) && (System.currentTimeMillis() - startTime) < timeoutMs);
 
         if ((System.currentTimeMillis() - startTime) > timeoutMs) {
-            throw new RuntimeException(new TimeoutException("Execution got timed out [" + command + "]"));
+            throw new TerminalExecutionException("Execution got timed out [" + command + "]");
         }
     }
 
@@ -326,20 +324,20 @@ public class Terminal {
     }
 
     private int clearTmpOutput() {
-        int status;
+        int outputStatus;
         try {
-            status = process.exitValue();
+            outputStatus = process.exitValue();
         } catch (IllegalThreadStateException e) {
-            status = 0;
+            outputStatus = 0;
         }
         commandOutput.consoleInfo(tmpOutput.consoleInfo.toArray(String[]::new));
-        if (status > 0) {
+        if (outputStatus > 0) {
             commandOutput.consoleError(tmpOutput.consoleError.toArray(String[]::new));
         } else {
             commandOutput.consoleInfo(tmpOutput.consoleError.toArray(String[]::new));
         }
         tmpOutput.clear();
-        return status;
+        return outputStatus;
     }
 
     public static class CommandOutput {
@@ -358,13 +356,14 @@ public class Terminal {
         }
 
         void consoleInfo(final String... string) {
-            stream(string).forEach(s -> {
-                consoleInfo.add(s);
-                consumerInfo.forEach(c -> c.accept(s));
-            });
+            addToConsole(string, consoleInfo, consumerInfo);
         }
 
         void consoleError(final String... string) {
+            addToConsole(string, consoleError, consumerError);
+        }
+
+        private void addToConsole(final String[] string, final List<String> consoleError, final List<Consumer<String>> consumerError) {
             stream(string).forEach(s -> {
                 consoleError.add(s);
                 consumerError.forEach(c -> c.accept(s));

@@ -12,7 +12,13 @@
     <description>Simple Command-line-util to get easy access to command line unix/windows - native without any
         dependencies
     </description>
-    <url>${git-project.url}</url>
+    <url>https://github.com/YunaBraska/surveys.git</url>
+
+    <scm>
+        <connection>scm:git:ssh://git@github.com/YunaBraska/command-line-util.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/YunaBraska/command-line-util.git</developerConnection>
+        <url>https://github.com/YunaBraska/command-line-util.git</url>
+    </scm>
 
     <developers>
         <developer>
@@ -29,25 +35,37 @@
     </licenses>
 
     <properties>
-        <java.version>12</java.version>
+        <!-- PROJECT -->
+        <java.version>11</java.version>
         <project.encoding>UTF-8</project.encoding>
         <project.build.sourceEncoding>${project.encoding}</project.build.sourceEncoding>
         <project.reporting.outputEncoding>${project.encoding}</project.reporting.outputEncoding>
-        <git-project.url>https://github.com/YunaBraska/command-line-util</git-project.url>
+        <junit-jupiter.version>5.7.0</junit-jupiter.version>
+        <!-- VERSIONS BUILD -->
+        <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
+        <maven-scm-plugin.version>1.11.2</maven-scm-plugin.version>
+        <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
+        <jacoco-maven-plugin.version>0.8.6</jacoco-maven-plugin.version>
+        <maven-javadoc-plugin.version>3.1.0</maven-javadoc-plugin.version>
+        <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
+        <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+        <maven-failsafe-plugin.version>3.0.0-M5</maven-failsafe-plugin.version>
+        <maven-surefire-plugin.version>3.0.0-M5</maven-surefire-plugin.version>
+        <config-metadata-generator.version>0.5.2</config-metadata-generator.version>
+        <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13</version>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-core</artifactId>
             <version>2.2</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit-jupiter.version}</version>
         </dependency>
     </dependencies>
 
@@ -56,16 +74,47 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
+                <version>${maven-compiler-plugin.version}</version>
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
                 </configuration>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven-surefire-plugin.version}</version>
+                <configuration>
+                    <groups>UnitTest</groups>
+                    <excludedGroups>IntegrationTest</excludedGroups>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>${maven-failsafe-plugin.version}</version>
+                <configuration>
+                    <groups>IntegrationTest</groups>
+                    <excludedGroups>UnitTest</excludedGroups>
+                    <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+                    <includes>
+                        <include>**/*Test.java</include>
+                    </includes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>integration-test</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.5</version>
+                <version>${jacoco-maven-plugin.version}</version>
                 <configuration>
                     <excludes>
                         <!--
@@ -73,6 +122,7 @@
                         **  Match zero or more directories
                         ?   Match a single character
                         -->
+                        <exclude>**/*/config/**/*</exclude>
                         <exclude>**/*/model/**/*</exclude>
                         <exclude>**/*/domain/**/*</exclude>
                         <exclude>**/*/persistence/**/*</exclude>
@@ -80,14 +130,40 @@
                     </excludes>
                 </configuration>
                 <executions>
-                    <execution>
+                    <execution> <!-- 1 -->
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
+                        <configuration>
+                            <destFile>${project.build.directory}/jacoco-ut.exec</destFile>
+                        </configuration>
                     </execution>
-                    <execution>
+                    <execution> <!-- 2 -->
+                        <id>pre-integration-prepare</id>
+                        <goals>
+                            <goal>prepare-agent-integration</goal>
+                        </goals>
+                    </execution>
+                    <execution> <!-- 3 -->
                         <id>report</id>
-                        <phase>prepare-package</phase>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>merge</goal>
+                        </goals>
+                        <configuration>
+                            <fileSets>
+                                <fileSet>
+                                    <directory>${project.build.directory}</directory>
+                                    <includes>
+                                        <include>*.exec</include>
+                                    </includes>
+                                </fileSet>
+                            </fileSets>
+                        </configuration>
+                    </execution>
+                    <execution> <!-- 4 -->
+                        <id>merged-report-generation</id>
+                        <phase>verify</phase>
                         <goals>
                             <goal>report</goal>
                         </goals>
@@ -100,29 +176,6 @@
     <!-- MAVEN CENTRAL USAGE -->
     <profiles>
         <profile>
-            <id>build</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>berlin.yuna</groupId>
-                        <artifactId>deployment-maven-plugin</artifactId>
-                        <version>12.0.5</version>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <phase>compile</phase>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
             <id>tag</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
@@ -132,7 +185,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-scm-plugin</artifactId>
-                        <version>1.11.2</version>
+                        <version>${maven-scm-plugin.version}</version>
                         <configuration>
                             <tag>${project.version}</tag>
                         </configuration>
@@ -144,7 +197,7 @@
                                 <goals>
                                     <goal>tag</goal>
                                 </goals>
-                                <phase>deploy</phase>
+                                <phase>compile</phase>
                             </execution>
                         </executions>
                     </plugin>
@@ -167,7 +220,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.1.0</version>
+                        <version>${maven-javadoc-plugin.version}</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
@@ -179,7 +232,6 @@
                                     <quiet>true</quiet>
                                     <!-- disable strict checking -->
                                     <doclint>none</doclint>
-                                    <source>8</source>
                                 </configuration>
                             </execution>
                         </executions>
@@ -187,7 +239,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>3.2.1</version>
+                        <version>${maven-source-plugin.version}</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
@@ -200,7 +252,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.6</version>
+                        <version>${maven-gpg-plugin.version}</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
@@ -224,7 +276,7 @@
                     <plugin>
                         <groupId>org.sonatype.plugins</groupId>
                         <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>1.6.8</version>
+                        <version>${nexus-staging-maven-plugin.version}</version>
                         <extensions>true</extensions>
                         <configuration>
                             <serverId>ossrh</serverId>
@@ -235,7 +287,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-release-plugin</artifactId>
-                        <version>2.5.3</version>
+                        <version>${maven-release-plugin.version}</version>
                         <configuration>
                             <autoVersionSubmodules>true</autoVersionSubmodules>
                             <useReleaseProfile>true</useReleaseProfile>
@@ -258,10 +310,4 @@
             </distributionManagement>
         </profile>
     </profiles>
-
-    <scm>
-        <connection>scm:git:${git-project.url}</connection>
-        <developerConnection>scm:git:${git-project.url}</developerConnection>
-        <url>${git-project.url}.git</url>
-    </scm>
 </project>

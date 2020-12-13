@@ -91,7 +91,6 @@ public class CommandLineReader extends ConcurrentHashMap<String, List<String>> {
             result.addAll(get(key));
         }
 
-        //noinspection unchecked
         result = removeDuplicates(result);
         return result;
     }
@@ -110,8 +109,7 @@ public class CommandLineReader extends ConcurrentHashMap<String, List<String>> {
     }
 
 
-    @SuppressWarnings("unchecked")
-    private List removeDuplicates(final List<String> result) {
+    private List<String> removeDuplicates(final List<String> result) {
         return new ArrayList<>(new LinkedHashSet<>(result));
     }
 
@@ -131,7 +129,7 @@ public class CommandLineReader extends ConcurrentHashMap<String, List<String>> {
             final String value = arg[1] == null ? null : getStripedValue(arg[1]);
 
             final List<String> valueList = new ArrayList<>(get(key));
-            if (!containsIgnoreCase(valueList, value)) {
+            if (value == null || !containsIgnoreCase(valueList, value)) {
                 valueList.add(value);
             }
             this.put(key, valueList);
@@ -140,7 +138,7 @@ public class CommandLineReader extends ConcurrentHashMap<String, List<String>> {
 
     private String parseCommands(final String input) {
         String result = input.trim();
-        if (result.indexOf('-') > 0) {
+        if (result.contains("-")) {
             final String[] cmdList = result.substring(0, result.indexOf('-')).trim().split(" ");
             result = result.substring(result.indexOf('-')).trim();
             addCommands(cmdList);

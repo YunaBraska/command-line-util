@@ -1,13 +1,24 @@
 package berlin.yuna.clu.logic;
 
 
+import berlin.yuna.clu.model.ThrowingFunction;
+import berlin.yuna.clu.model.exception.FileCpoyException;
+import berlin.yuna.clu.model.exception.FileNotReadableException;
+import berlin.yuna.clu.model.exception.TerminalExecutionException;
+
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.MalformedInputException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.ARM;
 import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.LINUX;
@@ -15,12 +26,17 @@ import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.MAC;
 import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.SOLARIS;
 import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.UNKNOWN;
 import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.WINDOWS;
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
+import static java.nio.charset.StandardCharsets.US_ASCII;
+import static java.nio.charset.StandardCharsets.UTF_16;
+import static java.nio.charset.StandardCharsets.UTF_16BE;
+import static java.nio.charset.StandardCharsets.UTF_16LE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE;
 import static java.nio.file.attribute.PosixFilePermission.OWNER_READ;
 import static java.nio.file.attribute.PosixFilePermission.OWNER_WRITE;
 
-
+@SuppressWarnings("unused")
 public class SystemUtil {
 
     private static final String TMP_DIR = System.getProperty("java.io.tmpdir");
@@ -42,7 +58,7 @@ public class SystemUtil {
         final String osArch = System.getProperty("os.arch").toLowerCase();
         if (osArch.contains("arm")) {
             return ARM;
-        } else if ((osName.contains("nix") || osName.contains("nux") || osName.indexOf("aix") > 0)) {
+        } else if ((osName.contains("nix") || osName.contains("nux") || osName.contains("aix"))) {
             return LINUX;
         } else if (osName.contains("mac")) {
             return MAC;
@@ -133,13 +149,13 @@ public class SystemUtil {
      * @param relativePath relative resource file path
      * @return temp path from copied file output
      */
-    public static Path copyResourceToTemp(final Class clazz, final String relativePath) {
+    public static Path copyResourceToTemp(final Class<?> clazz, final String relativePath) {
         final File tmpFile = new File(TMP_DIR, new File(relativePath).getName());
         if (!tmpFile.exists()) {
             try {
-                Files.copy(clazz.getClassLoader().getResourceAsStream(relativePath), tmpFile.toPath());
+                Files.copy(Objects.requireNonNull(clazz.getClassLoader().getResourceAsStream(relativePath)), tmpFile.toPath());
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                throw new FileCpoyException("Could not copy file", e);
             }
         }
         return tmpFile.toPath();
@@ -153,10 +169,22 @@ public class SystemUtil {
      */
     public static String readFile(final Path path) {
         try {
-            return new String(Files.readAllBytes(path), UTF_8);
+            return tryCharsets(charset -> Files.readString(path, charset));
         } catch (Exception e) {
-            throw new RuntimeException("Could not read test file cause: \n" + e);
+            throw new FileNotReadableException("Could not read file [" + path + "]", e);
         }
+    }
+
+    private static <T> T tryCharsets(final ThrowingFunction<Charset, T> function) throws Exception {
+        Exception last = null;
+        for (Charset charset : List.of(UTF_8, UTF_16, UTF_16BE, UTF_16LE, ISO_8859_1, US_ASCII)) {
+            try {
+                return function.acceptThrows(charset);
+            } catch (Exception e) {
+                last = e;
+            }
+        }
+        throw last == null? new TerminalExecutionException("Unknown") : last;
     }
 
     /**
@@ -167,9 +195,9 @@ public class SystemUtil {
      */
     public static List<String> readFileLines(final Path path) {
         try {
-            return Files.readAllLines(path, UTF_8);
+            return tryCharsets(charset -> Files.readAllLines(path, charset));
         } catch (Exception e) {
-            throw new RuntimeException("Could not read test file cause: \n" + e);
+            throw new FileNotReadableException("Could not read file [" + path + "]", e);
         }
     }
 
@@ -181,9 +209,10 @@ public class SystemUtil {
      */
     public static boolean deleteDirectory(final Path path) {
         final AtomicBoolean success = new AtomicBoolean(true);
-        try {
-            Files.walk(path).sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(file -> success.set((success.get() && file.delete()) && success.get()));
-        } catch (Exception ignored) {
+
+        try (Stream<Path> stream = Files.walk(path)) {
+            stream.sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(file -> success.set((success.get() && file.delete()) && success.get()));
+        } catch (IOException ex) {
             return success.get();
         }
         return success.get();

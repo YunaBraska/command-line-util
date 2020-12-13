@@ -1,6 +1,8 @@
 package berlin.yuna.clu.logic;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -9,19 +11,20 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class CommandLineReaderTest {
+@Tag("UnitTest")
+class CommandLineReaderTest {
 
     private final String input = " myCommand1    myCommand2 --help  -v=\"true\" -v=\"true\" --verbose=\"true\"   -DArgs=\"true\" -param 42   54   -DArgList=\"item 1\" --DArgList=\"item 2\" --DArgList=\"-item 3\"  ";
 
     @Test
-    public void parse_withEmptyString_shouldBeSuccessful() {
+    void parse_withEmptyString_shouldBeSuccessful() {
         final CommandLineReader cmdLines = new CommandLineReader("");
 
         assertThat(cmdLines.size(), is(0));
     }
 
     @Test
-    public void parse_withCommands_shouldBeSuccessful() {
+    void parse_withCommands_shouldBeSuccessful() {
         final CommandLineReader cmdLines = new CommandLineReader(input);
 
         assertThat(cmdLines.getCommand(), is(notNullValue()));
@@ -32,7 +35,7 @@ public class CommandLineReaderTest {
     }
 
     @Test
-    public void parse_withOutCommands_shouldBeSuccessful() {
+    void parse_withOutCommands_shouldBeSuccessful() {
         final CommandLineReader cmdLines = new CommandLineReader("--help -v -DArgs=\"true\" param 42 54");
 
         assertThat(cmdLines.getCommand(), is(nullValue()));
@@ -40,7 +43,7 @@ public class CommandLineReaderTest {
     }
 
     @Test
-    public void parse_arguments_shouldBeSuccessful() {
+    void parse_arguments_shouldBeSuccessful() {
         final CommandLineReader cmdLines = new CommandLineReader(input);
 
         assertThat(cmdLines.size(), is(6));

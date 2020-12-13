@@ -13,31 +13,6 @@
 [![Size][size_shield]][size_shield]
 ![Label][label_shield]
 
-[build_shield]: https://img.shields.io/travis/YunaBraska/command-line-util/master?style=flat-square
-[build_link]: https://travis-ci.org/YunaBraska/command-line-util
-[maintainable_shield]: https://img.shields.io/codeclimate/maintainability/YunaBraska/command-line-util?style=flat-square
-[maintainable_link]: https://codeclimate.com/github/YunaBraska/command-line-util/maintainability
-[coverage_shield]: https://img.shields.io/codecov/c/github/YunaBraska/command-line-util?style=flat-square
-[coverage_link]: https://codecov.io/gh/YunaBraska/command-line-util?branch=master
-[issues_shield]: https://img.shields.io/github/issues/YunaBraska/command-line-util?style=flat-square
-[issues_link]: https://github.com/YunaBraska/command-line-util/commits/master
-[commit_shield]: https://img.shields.io/github/last-commit/YunaBraska/command-line-util?style=flat-square
-[commit_link]: https://github.com/YunaBraska/command-line-util/issues
-[license_shield]: https://img.shields.io/github/license/YunaBraska/command-line-util?style=flat-square
-[license_link]: https://github.com/YunaBraska/command-line-util/blob/master/LICENSE
-[dependency_shield]: https://img.shields.io/librariesio/github/YunaBraska/command-line-util?style=flat-square
-[dependency_link]: https://libraries.io/github/YunaBraska/command-line-util
-[central_shield]: https://img.shields.io/maven-central/v/berlin.yuna/command-line-util?style=flat-square
-[central_link]:https://search.maven.org/artifact/berlin.yuna/command-line-util
-[tag_shield]: https://img.shields.io/github/v/tag/YunaBraska/command-line-util?style=flat-square
-[tag_link]: https://github.com/YunaBraska/command-line-util/releases
-[javadoc_shield]: https://javadoc.io/badge2/berlin.yuna/command-line-util/javadoc.svg?style=flat-square
-[javadoc_link]: https://javadoc.io/doc/berlin.yuna/command-line-util
-[size_shield]: https://img.shields.io/github/repo-size/YunaBraska/command-line-util?style=flat-square
-[label_shield]: https://img.shields.io/badge/Yuna-QueenInside-blueviolet?style=flat-square
-[gitter_shield]: https://img.shields.io/gitter/room/YunaBraska/nats-streaming-server-embedded?style=flat-square
-[gitter_link]: https://gitter.im/nats-streaming-server-embedded/Lobby
-
 ### Description
 Command-line-util to get easy access to command line unix/windows - simple and native without any dependencies
 For more professional you can use [plexus-utils](https://github.com/sonatype/plexus-utils/tree/master/src/main/java/org/codehaus/plexus/util/cli) [commons-cli](https://commons.apache.org/proper/commons-cli/)
@@ -78,7 +53,7 @@ killProcessByName("tomcat");
 //Translates and saves [PosixFilePermission]s to generic
 SystemUtil.setFilePermissions(file, OWNER_READ, OWNER_WRITE, OWNER_EXECUTE);
 
-//File reading
+//Read file (tries every charset)
 String content SystemUtil.readFile(path);
 List<String> contentLines SystemUtil.readFileLines(path);
 
@@ -90,4 +65,29 @@ boolean removed = SystemUtil.deleteDirectory
 * [ ] Timeout test
 * [ ] waitFor - some commands are too fast to get the exit status - workaround is to run terminal with .timeout().execute
 
-![command-line-util](src/main/resources/banner.png "command-line-util")
+![command-line-util](src/test/resources/banner.png "command-line-util")
+
+[build_shield]: https://github.com/YunaBraska/command-line-util/workflows/JAVA_CI/badge.svg
+[build_link]: https://github.com/YunaBraska/command-line-util/actions?query=workflow%3AJAVA_CI
+[maintainable_shield]: https://img.shields.io/codeclimate/maintainability/YunaBraska/command-line-util?style=flat-square
+[maintainable_link]: https://codeclimate.com/github/YunaBraska/command-line-util/maintainability
+[coverage_shield]: https://img.shields.io/codeclimate/coverage/YunaBraska/command-line-util?style=flat-square
+[coverage_link]: https://codeclimate.com/github/YunaBraska/command-line-util/test_coverage
+[issues_shield]: https://img.shields.io/github/issues/YunaBraska/command-line-util?style=flat-square
+[issues_link]: https://github.com/YunaBraska/command-line-util/commits/master
+[commit_shield]: https://img.shields.io/github/last-commit/YunaBraska/command-line-util?style=flat-square
+[commit_link]: https://github.com/YunaBraska/command-line-util/issues
+[license_shield]: https://img.shields.io/github/license/YunaBraska/command-line-util?style=flat-square
+[license_link]: https://github.com/YunaBraska/command-line-util/blob/master/LICENSE
+[dependency_shield]: https://img.shields.io/librariesio/github/YunaBraska/command-line-util?style=flat-square
+[dependency_link]: https://libraries.io/github/YunaBraska/command-line-util
+[central_shield]: https://img.shields.io/maven-central/v/berlin.yuna/command-line-util?style=flat-square
+[central_link]:https://search.maven.org/artifact/berlin.yuna/command-line-util
+[tag_shield]: https://img.shields.io/github/v/tag/YunaBraska/command-line-util?style=flat-square
+[tag_link]: https://github.com/YunaBraska/command-line-util/releases
+[javadoc_shield]: https://javadoc.io/badge2/berlin.yuna/command-line-util/javadoc.svg?style=flat-square
+[javadoc_link]: https://javadoc.io/doc/berlin.yuna/command-line-util
+[size_shield]: https://img.shields.io/github/repo-size/YunaBraska/command-line-util?style=flat-square
+[label_shield]: https://img.shields.io/badge/Yuna-QueenInside-blueviolet?style=flat-square
+[gitter_shield]: https://img.shields.io/gitter/room/YunaBraska/nats-streaming-server-embedded?style=flat-square
+[gitter_link]: https://gitter.im/nats-streaming-server-embedded/Lobby

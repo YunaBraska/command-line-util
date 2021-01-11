@@ -4,6 +4,8 @@
 name: JAVA_CI_DAILY
 
 on:
+  workflow_dispatch:
+    branches: [ master ]
   deployment:
     branches: [ master ]
   schedule:
@@ -47,7 +49,6 @@ jobs:
         run: |
           git fetch origin release:release &>/dev/null || true
           if git rev-parse --verify "release" &>/dev/null; then echo "::set-env name=HAS_RELEASE_BRANCH::true"; fi
-          git push --delete origin release &>/dev/null || true
       - name: Import GPG key
         if: env.HAS_RELEASE_BRANCH == 'true'
         id: import_gpg
@@ -69,4 +70,7 @@ jobs:
         env:
           MAVEN_USERNAME: ${{ secrets.OSSH_USER }}
           MAVEN_PASSWORD: ${{ secrets.OSSH_PASS }}
+      - name: "Remove release branch"
+        run: |
+          git push --delete origin release &>/dev/null || true
 

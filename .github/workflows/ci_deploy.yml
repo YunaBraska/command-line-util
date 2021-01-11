@@ -7,7 +7,7 @@ on:
   deployment:
     branches: [ master ]
   schedule:
-    - cron: '0 7 * * *'
+    - cron: '0 1 * * *'
 
 env:
   ACTIONS_ALLOW_UNSECURE_COMMANDS: true
@@ -18,10 +18,10 @@ jobs:
     steps:
       #START_FILL_WITH UPDATE_AND_TEST
       - uses: actions/checkout@v2
-      - name: Set up JDK 11
+      - name: Set up JDK 8
         uses: actions/setup-java@v1
         with:
-          java-version: 11
+          java-version: 8
       - name: Maven compile and update dependencies
         run: |
           ./mvnw -B -q versions:update-properties -DgenerateBackupPoms=false

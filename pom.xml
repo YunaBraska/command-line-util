@@ -5,7 +5,7 @@
 
     <groupId>berlin.yuna</groupId>
     <artifactId>command-line-util</artifactId>
-    <version>0.1.2</version>
+    <version>0.1.4</version>
     <packaging>jar</packaging>
 
     <name>${project.artifactId}</name>
@@ -36,7 +36,7 @@
 
     <properties>
         <!-- PROJECT -->
-        <java.version>11</java.version>
+        <java.version>8</java.version>
         <project.encoding>UTF-8</project.encoding>
         <project.build.sourceEncoding>${project.encoding}</project.build.sourceEncoding>
         <project.reporting.outputEncoding>${project.encoding}</project.reporting.outputEncoding>

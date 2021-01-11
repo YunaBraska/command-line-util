@@ -244,7 +244,8 @@ public class Terminal {
             } else {
                 waitFor(command);
             }
-            process.onExit().thenApply(p -> clearTmpOutput());
+
+//            Java 9 feature process.onExit().thenApply(p -> clearTmpOutput());
 
             waitForConsoleOutput(waitForMs <= 0 ? 256 : waitForMs);
             final String error = tmpOutput.consoleError();
@@ -330,11 +331,11 @@ public class Terminal {
         } catch (IllegalThreadStateException e) {
             outputStatus = 0;
         }
-        commandOutput.consoleInfo(tmpOutput.consoleInfo.toArray(String[]::new));
+        commandOutput.consoleInfo(tmpOutput.consoleInfo.toArray(new String[0]));
         if (outputStatus > 0) {
-            commandOutput.consoleError(tmpOutput.consoleError.toArray(String[]::new));
+            commandOutput.consoleError(tmpOutput.consoleError.toArray(new String[0]));
         } else {
-            commandOutput.consoleInfo(tmpOutput.consoleError.toArray(String[]::new));
+            commandOutput.consoleInfo(tmpOutput.consoleError.toArray(new String[0]));
         }
         tmpOutput.clear();
         return outputStatus;

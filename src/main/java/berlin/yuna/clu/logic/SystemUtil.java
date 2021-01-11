@@ -4,12 +4,10 @@ package berlin.yuna.clu.logic;
 import berlin.yuna.clu.model.ThrowingFunction;
 import berlin.yuna.clu.model.exception.FileCpoyException;
 import berlin.yuna.clu.model.exception.FileNotReadableException;
-import berlin.yuna.clu.model.exception.TerminalExecutionException;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.charset.MalformedInputException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
@@ -17,7 +15,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.ARM;
@@ -35,6 +32,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE;
 import static java.nio.file.attribute.PosixFilePermission.OWNER_READ;
 import static java.nio.file.attribute.PosixFilePermission.OWNER_WRITE;
+import static java.util.Arrays.asList;
 
 @SuppressWarnings("unused")
 public class SystemUtil {
@@ -169,7 +167,7 @@ public class SystemUtil {
      */
     public static String readFile(final Path path) {
         try {
-            return tryCharsets(charset -> Files.readString(path, charset));
+            return tryCharsets(charset -> new String(Files.readAllBytes(path), charset));
         } catch (Exception e) {
             throw new FileNotReadableException("Could not read file [" + path + "]", e);
         }
@@ -177,14 +175,14 @@ public class SystemUtil {
 
     private static <T> T tryCharsets(final ThrowingFunction<Charset, T> function) throws Exception {
         Exception last = null;
-        for (Charset charset : List.of(UTF_8, UTF_16, UTF_16BE, UTF_16LE, ISO_8859_1, US_ASCII)) {
+        for (Charset charset : asList(UTF_8, UTF_16, UTF_16BE, UTF_16LE, ISO_8859_1, US_ASCII)) {
             try {
                 return function.acceptThrows(charset);
             } catch (Exception e) {
                 last = e;
             }
         }
-        throw last == null? new TerminalExecutionException("Unknown") : last;
+        throw last;
     }
 
     /**

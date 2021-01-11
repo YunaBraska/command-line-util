@@ -6,7 +6,7 @@ import java.util.function.Function;
 public interface ThrowingFunction<T, R> extends Function<T, R> {
 
 
-    @Deprecated(forRemoval = true)
+    @Deprecated
     @Override
     public default R apply(final T t) {
         try {

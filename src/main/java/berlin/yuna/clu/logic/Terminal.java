@@ -1,7 +1,7 @@
 package berlin.yuna.clu.logic;
 
 
-import berlin.yuna.clu.logic.SystemUtil.OperatingSystem;
+import berlin.yuna.clu.model.OsType;
 import berlin.yuna.clu.model.exception.TerminalExecutionException;
 import berlin.yuna.clu.util.StreamGobbler;
 
@@ -31,8 +31,6 @@ public class Terminal {
     private long waitForMs = 256;
     private boolean breakOnError = false;
     private File dir = new File(System.getProperty("user.dir"));
-
-    private static final OperatingSystem OS_TYPE = SystemUtil.getOsType();
 
     /**
      * Clean copy of terminal with default consumer and clean console log
@@ -270,7 +268,7 @@ public class Terminal {
         final ProcessBuilder builder = new ProcessBuilder();
         builder.directory(dir);
         System.getProperties().forEach((key, value) -> builder.environment().put(key.toString(), value.toString()));
-        builder.command(addExecutor(OS_TYPE, command));
+        builder.command(addExecutor(SystemUtil.OS, command));
         final Process process = builder.start();
 
         Executors.newSingleThreadExecutor().submit(new StreamGobbler(process.getInputStream(), singletonList(tmpOutput::consoleInfo)));
@@ -286,8 +284,8 @@ public class Terminal {
         return status;
     }
 
-    String[] addExecutor(final OperatingSystem os, final String command) {
-        if (os == OperatingSystem.WINDOWS) {
+    String[] addExecutor(final OsType os, final String command) {
+        if (os == OsType.OS_WINDOWS) {
             return new String[]{"cmd.exe", "/c", command};
         } else {
             return new String[]{"sh", "-c", command};

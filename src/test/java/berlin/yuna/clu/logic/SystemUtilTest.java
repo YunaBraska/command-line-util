@@ -1,5 +1,11 @@
 package berlin.yuna.clu.logic;
 
+import berlin.yuna.clu.logic.helper.TestMaps;
+import berlin.yuna.clu.model.OsArch;
+import berlin.yuna.clu.model.OsArchType;
+import berlin.yuna.clu.model.OsType;
+import berlin.yuna.clu.model.exception.FileCopyException;
+import berlin.yuna.clu.model.exception.TerminalExecutionException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -11,21 +17,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 
-import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.ARM;
-import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.LINUX;
-import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.MAC;
-import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.SOLARIS;
-import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.UNKNOWN;
-import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.WINDOWS;
-import static java.nio.file.attribute.PosixFilePermission.OTHERS_WRITE;
-import static java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE;
-import static java.nio.file.attribute.PosixFilePermission.OWNER_READ;
-import static java.nio.file.attribute.PosixFilePermission.OWNER_WRITE;
+import static berlin.yuna.clu.logic.helper.TestMaps.ARCH_TEST_MAP;
+import static berlin.yuna.clu.logic.helper.TestMaps.OS_TEST_MAP;
+import static java.nio.file.attribute.PosixFilePermission.*;
 import static java.util.Objects.requireNonNull;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -38,6 +36,7 @@ class SystemUtilTest {
 
     private final String testFileOrigin = "banner.png";
     private final File testFileCopy = new File(System.getProperty("java.io.tmpdir"), testFileOrigin);
+
 
     @BeforeEach
     void setUp() {
@@ -52,65 +51,38 @@ class SystemUtilTest {
     }
 
     @Test
-    void getOsType_withArm_shouldReturnArm() {
-        System.setProperty("os.arch", "arm-linux");
-        System.setProperty("os.name", "notRelevant");
-        assertThat(SystemUtil.getOsType(), is(ARM));
-        assertThat(SystemUtil.isArm(), is(true));
-        assertThat(SystemUtil.isMac(), is(false));
-        assertThat(SystemUtil.isLinux(), is(false));
-        assertThat(SystemUtil.isSolaris(), is(false));
-        assertThat(SystemUtil.isWindows(), is(false));
+    void testOsTypes() {
+        for (Map.Entry<String, OsType> test : OS_TEST_MAP.entrySet()) {
+            assertThat(OsType.of(test.getKey()), is(test.getValue()));
+        }
+        assertThat(OsType.of("xxx"), is(OsType.OS_UNKNOWN));
     }
 
     @Test
-    void getOsType_withLinux_shouldReturnLinux() {
-        System.setProperty("os.name", "linux");
-        assertThat(SystemUtil.getOsType(), is(LINUX));
-        assertThat(SystemUtil.isLinux(), is(true));
-        assertThat(SystemUtil.isArm(), is(false));
+    void testOsArch() {
+        for (Map.Entry<String, TestMaps.ExpectedArch> test : ARCH_TEST_MAP.entrySet()) {
+            assertThat("Input was " + test.getKey(), OsArch.of(test.getKey()), is(test.getValue().getOsArch()));
+            assertThat("Input was " + test.getKey(), OsArchType.of(test.getKey()), is(test.getValue().getOsArchType()));
+        }
     }
 
     @Test
-    void getOsType_withUnix_shouldReturnLinux() {
-        System.setProperty("os.name", "unix");
-        assertThat(SystemUtil.getOsType(), is(LINUX));
-        assertThat(SystemUtil.isLinux(), is(true));
-    }
-
-    @Test
-    void getOsType_withMac_shouldReturnMac() {
-        System.setProperty("os.name", "mac");
-        assertThat(SystemUtil.getOsType(), is(MAC));
-        assertThat(SystemUtil.isMac(), is(true));
-    }
-
-    @Test
-    void getOsType_withSonus_shouldReturnSolaris() {
-        System.setProperty("os.name", "sunos");
-        assertThat(SystemUtil.getOsType(), is(SOLARIS));
-        assertThat(SystemUtil.isSolaris(), is(true));
-    }
-
-    @Test
-    void getOsType_withAix_shouldReturnLinux() {
-        System.setProperty("os.name", "ibm-aix");
-        assertThat(SystemUtil.getOsType(), is(LINUX));
-        assertThat(SystemUtil.isLinux(), is(true));
-    }
-
-    @Test
-    void getOsType_withWindows_shouldReturnWindows() {
-        System.setProperty("os.name", "MsDos Windows 3.1");
-        assertThat(SystemUtil.getOsType(), is(SystemUtil.OperatingSystem.WINDOWS));
-        assertThat(SystemUtil.isWindows(), is(true));
-    }
-
-    @Test
-    void getOsType_withOtherOS_shouldReturnUnknown() {
-        System.setProperty("os.name", "otherOth");
-        assertThat(SystemUtil.getOsType(), is(UNKNOWN));
-        assertThat(SystemUtil.isUnknown(), is(true));
+    void testUnix() {
+        for (OsType os : OsType.values()) {
+            final boolean isUnix = (os.isOneOf(
+                    OsType.OS_AIX,
+                    OsType.OS_HP_UX,
+                    OsType.OS_IRIX,
+                    OsType.OS_LINUX,
+                    OsType.OS_MAC,
+                    OsType.OS_SUN,
+                    OsType.OS_SOLARIS,
+                    OsType.OS_FREE_BSD,
+                    OsType.OS_OPEN_BSD,
+                    OsType.OS_NET_BSD
+            ));
+            assertThat(os.isUnix(), is(isUnix));
+        }
     }
 
     @Test
@@ -120,12 +92,11 @@ class SystemUtilTest {
 
     @Test
     void getKillCommand_shouldReturnRightCommand() {
-        assertThat(SystemUtil.getKillCommand(WINDOWS), is(equalTo("taskkill /F /IM")));
-        assertThat(SystemUtil.getKillCommand(ARM), is(equalTo("pkill -f")));
-        assertThat(SystemUtil.getKillCommand(MAC), is(equalTo("pkill -f")));
-        assertThat(SystemUtil.getKillCommand(LINUX), is(equalTo("pkill -f")));
-        assertThat(SystemUtil.getKillCommand(SOLARIS), is(equalTo("killall")));
-        assertThat(SystemUtil.getKillCommand(UNKNOWN), is(equalTo("killall")));
+        assertThat(SystemUtil.getKillCommand(OsType.OS_WINDOWS), is(equalTo("taskkill /F /IM")));
+        assertThat(SystemUtil.getKillCommand(OsType.OS_MAC), is(equalTo("pkill -f")));
+        assertThat(SystemUtil.getKillCommand(OsType.OS_LINUX), is(equalTo("pkill -f")));
+        assertThat(SystemUtil.getKillCommand(OsType.OS_SOLARIS), is(equalTo("killall")));
+        assertThat(SystemUtil.getKillCommand(OsType.OS_UNKNOWN), is(equalTo("killall")));
     }
 
     @Test
@@ -173,6 +144,8 @@ class SystemUtilTest {
     @Test
     void newInstance_smokeTest() {
         assertThat(new SystemUtil(), is(notNullValue()));
+        assertThat(new TerminalExecutionException("Test") instanceof RuntimeException, is(true));
+        assertThat(new FileCopyException("Test", new RuntimeException()) instanceof RuntimeException, is(true));
     }
 
     @Test

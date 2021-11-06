@@ -8,7 +8,7 @@ public interface ThrowingFunction<T, R> extends Function<T, R> {
 
     @Deprecated
     @Override
-    public default R apply(final T t) {
+    default R apply(final T t) {
         try {
             return acceptThrows(t);
         } catch (final Throwable th) {
@@ -22,5 +22,5 @@ public interface ThrowingFunction<T, R> extends Function<T, R> {
      * @param t the input argument
      * @throws Throwable when the underlying apply throws
      */
-    public R acceptThrows(T t) throws Exception;
+    R acceptThrows(T t) throws Exception;
 }

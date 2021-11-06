@@ -1,8 +1,11 @@
 package berlin.yuna.clu.logic;
 
 
+import berlin.yuna.clu.model.OsArch;
+import berlin.yuna.clu.model.OsArchType;
+import berlin.yuna.clu.model.OsType;
 import berlin.yuna.clu.model.ThrowingFunction;
-import berlin.yuna.clu.model.exception.FileCpoyException;
+import berlin.yuna.clu.model.exception.FileCopyException;
 import berlin.yuna.clu.model.exception.FileNotReadableException;
 
 import java.io.File;
@@ -17,111 +20,29 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
-import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.ARM;
-import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.LINUX;
-import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.MAC;
-import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.SOLARIS;
-import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.UNKNOWN;
-import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.WINDOWS;
-import static java.nio.charset.StandardCharsets.ISO_8859_1;
-import static java.nio.charset.StandardCharsets.US_ASCII;
-import static java.nio.charset.StandardCharsets.UTF_16;
-import static java.nio.charset.StandardCharsets.UTF_16BE;
-import static java.nio.charset.StandardCharsets.UTF_16LE;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE;
-import static java.nio.file.attribute.PosixFilePermission.OWNER_READ;
-import static java.nio.file.attribute.PosixFilePermission.OWNER_WRITE;
+import static java.nio.charset.StandardCharsets.*;
+import static java.nio.file.attribute.PosixFilePermission.*;
 import static java.util.Arrays.asList;
 
 @SuppressWarnings("unused")
 public class SystemUtil {
 
-    private static final String TMP_DIR = System.getProperty("java.io.tmpdir");
-
-    /**
-     * Supported operation system enum
-     */
-    public enum OperatingSystem {
-        ARM, LINUX, MAC, WINDOWS, SOLARIS, UNKNOWN
-    }
-
-    /**
-     * Get current operating system
-     *
-     * @return current {@link OperatingSystem} if supported, else {@link OperatingSystem#UNKNOWN}
-     */
-    public static OperatingSystem getOsType() {
-        final String osName = System.getProperty("os.name").toLowerCase();
-        final String osArch = System.getProperty("os.arch").toLowerCase();
-        if (osArch.contains("arm")) {
-            return ARM;
-        } else if ((osName.contains("nix") || osName.contains("nux") || osName.contains("aix"))) {
-            return LINUX;
-        } else if (osName.contains("mac")) {
-            return MAC;
-        } else if (osName.contains("win")) {
-            return WINDOWS;
-        } else if (osName.contains("sunos")) {
-            return SOLARIS;
-        } else {
-            return UNKNOWN;
-        }
-    }
-
-    /**
-     * Checks operating system with {@link SystemUtil#getOsType()}
-     *
-     * @return true if the system is {@link OperatingSystem#ARM}
-     */
-    public static boolean isArm() {
-        return getOsType() == ARM;
-    }
-
-    /**
-     * Checks operating system with {@link SystemUtil#getOsType()}
-     *
-     * @return true if the system is {@link OperatingSystem#LINUX}
-     */
-    public static boolean isLinux() {
-        return getOsType() == LINUX;
-    }
-
-    /**
-     * Checks operating system with {@link SystemUtil#getOsType()}
-     *
-     * @return true if the system is {@link OperatingSystem#MAC}
-     */
-    public static boolean isMac() {
-        return getOsType() == MAC;
-    }
-
-    /**
-     * Checks operating system with {@link SystemUtil#getOsType()}
-     *
-     * @return true if the system is {@link OperatingSystem#WINDOWS}
-     */
-    public static boolean isWindows() {
-        return getOsType() == WINDOWS;
-    }
-
-    /**
-     * Checks operating system with {@link SystemUtil#getOsType()}
-     *
-     * @return true if the system is {@link OperatingSystem#SOLARIS}
-     */
-    public static boolean isSolaris() {
-        return getOsType() == SOLARIS;
-    }
-
-    /**
-     * Checks operating system with {@link SystemUtil#getOsType()}
-     *
-     * @return true if the system is {@link OperatingSystem#UNKNOWN}
-     */
-    public static boolean isUnknown() {
-        return getOsType() == UNKNOWN;
-    }
+    public static final String TMP_DIR = System.getProperty("java.io.tmpdir");
+    public static final OsType OS = OsType.of(System.getProperty("os.name"));
+    public static final OsArch OS_ARCH = OsArch.of(System.getProperty("os.arch"));
+    public static final OsArchType OS_ARCH_TYPE = OsArchType.of(System.getProperty("os.arch"));
+    public static final boolean IS_UNIX = OS.isOneOf(
+            OsType.OS_AIX,
+            OsType.OS_HP_UX,
+            OsType.OS_IRIX,
+            OsType.OS_LINUX,
+            OsType.OS_MAC,
+            OsType.OS_SUN,
+            OsType.OS_SOLARIS,
+            OsType.OS_FREE_BSD,
+            OsType.OS_OPEN_BSD,
+            OsType.OS_NET_BSD
+    );
 
     /**
      * Sets silent file permissions (PosixFilePermissions will be mapped to filePermissions as windows doesn't understand posix)
@@ -153,7 +74,7 @@ public class SystemUtil {
             try {
                 Files.copy(Objects.requireNonNull(clazz.getClassLoader().getResourceAsStream(relativePath)), tmpFile.toPath());
             } catch (Exception e) {
-                throw new FileCpoyException("Could not copy file", e);
+                throw new FileCopyException("Could not copy file", e);
             }
         }
         return tmpFile.toPath();
@@ -208,7 +129,7 @@ public class SystemUtil {
     public static boolean deleteDirectory(final Path path) {
         final AtomicBoolean success = new AtomicBoolean(true);
 
-        try (Stream<Path> stream = Files.walk(path)) {
+        try (final Stream<Path> stream = Files.walk(path)) {
             stream.sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(file -> success.set((success.get() && file.delete()) && success.get()));
         } catch (IOException ex) {
             return success.get();
@@ -222,15 +143,15 @@ public class SystemUtil {
      * @param name name of the process to kill
      */
     public static void killProcessByName(final String name) {
-        new Terminal().execute(getKillCommand(getOsType()) + " " + name);
+        new Terminal().execute(getKillCommand(OS) + " " + name);
     }
 
-    static String getKillCommand(final OperatingSystem operatingSystem) {
-        switch (operatingSystem) {
-            case WINDOWS:
+    static String getKillCommand(final OsType os) {
+        switch (os) {
+            case OS_WINDOWS:
                 return "taskkill /F /IM";
-            case SOLARIS:
-            case UNKNOWN:
+            case OS_SOLARIS:
+            case OS_UNKNOWN:
                 return "killall";
             default:
                 return "pkill -f";

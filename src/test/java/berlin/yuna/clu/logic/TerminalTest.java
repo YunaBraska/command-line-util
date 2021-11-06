@@ -8,14 +8,9 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.nio.file.Paths;
 
-import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.LINUX;
-import static berlin.yuna.clu.logic.SystemUtil.OperatingSystem.WINDOWS;
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static berlin.yuna.clu.model.OsType.OS_LINUX;
+import static berlin.yuna.clu.model.OsType.OS_WINDOWS;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -31,7 +26,7 @@ class TerminalTest {
 
     @Test
     void getCommandByOsType_withUnix_shouldBuildCorrectly() {
-        final String[] command = terminal.addExecutor(LINUX, "ls");
+        final String[] command = terminal.addExecutor(OS_LINUX, "ls");
 
         assertThat(command, is(notNullValue()));
         assertThat(command, is(new String[]{"sh", "-c", "ls"}));
@@ -39,7 +34,7 @@ class TerminalTest {
 
     @Test
     void getCommandByOsType_withWindows_shouldBuildCorrectly() {
-        final String[] command = terminal.addExecutor(WINDOWS, "dir");
+        final String[] command = terminal.addExecutor(OS_WINDOWS, "dir");
 
         assertThat(command, is(notNullValue()));
         assertThat(command, is(new String[]{"cmd.exe", "/c", "dir"}));

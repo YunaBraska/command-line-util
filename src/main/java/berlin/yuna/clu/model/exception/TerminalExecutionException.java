@@ -6,7 +6,7 @@ public class TerminalExecutionException extends RuntimeException {
         super(message);
     }
 
-    public TerminalExecutionException(String message, Throwable cause) {
+    public TerminalExecutionException(final String message, final Throwable cause) {
         super(message, cause);
     }
 }

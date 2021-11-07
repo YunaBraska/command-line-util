@@ -1,5 +1,7 @@
 package berlin.yuna.clu.model;
 
+import static berlin.yuna.clu.model.OsType.osCase;
+
 public enum OsArch {
     ARCH_AMD("amd"),
     ARCH_ARM("arm", "aarch"),
@@ -27,5 +29,10 @@ public enum OsArch {
             }
         }
         return ARCH_UNKNOWN;
+    }
+
+    @Override
+    public String toString() {
+        return osCase(name(), 5);
     }
 }

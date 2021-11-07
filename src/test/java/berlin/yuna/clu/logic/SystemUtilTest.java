@@ -21,9 +21,14 @@ import java.util.Map;
 
 import static berlin.yuna.clu.logic.helper.TestMaps.ARCH_TEST_MAP;
 import static berlin.yuna.clu.logic.helper.TestMaps.OS_TEST_MAP;
-import static java.nio.file.attribute.PosixFilePermission.*;
+import static java.nio.file.attribute.PosixFilePermission.OTHERS_WRITE;
+import static java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE;
+import static java.nio.file.attribute.PosixFilePermission.OWNER_READ;
+import static java.nio.file.attribute.PosixFilePermission.OWNER_WRITE;
 import static java.util.Objects.requireNonNull;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -69,12 +74,12 @@ class SystemUtilTest {
     @Test
     void testUnix() {
         for (OsType os : OsType.values()) {
-            final boolean isUnix = (os.isOneOf(
+            final boolean isUnix = (isOneOf(os,
                     OsType.OS_AIX,
                     OsType.OS_HP_UX,
                     OsType.OS_IRIX,
                     OsType.OS_LINUX,
-                    OsType.OS_MAC,
+                    OsType.OS_DARWIN,
                     OsType.OS_SUN,
                     OsType.OS_SOLARIS,
                     OsType.OS_FREE_BSD,
@@ -93,7 +98,7 @@ class SystemUtilTest {
     @Test
     void getKillCommand_shouldReturnRightCommand() {
         assertThat(SystemUtil.getKillCommand(OsType.OS_WINDOWS), is(equalTo("taskkill /F /IM")));
-        assertThat(SystemUtil.getKillCommand(OsType.OS_MAC), is(equalTo("pkill -f")));
+        assertThat(SystemUtil.getKillCommand(OsType.OS_DARWIN), is(equalTo("pkill -f")));
         assertThat(SystemUtil.getKillCommand(OsType.OS_LINUX), is(equalTo("pkill -f")));
         assertThat(SystemUtil.getKillCommand(OsType.OS_SOLARIS), is(equalTo("killall")));
         assertThat(SystemUtil.getKillCommand(OsType.OS_UNKNOWN), is(equalTo("killall")));
@@ -170,5 +175,14 @@ class SystemUtilTest {
     @Test
     void readFileLines_WithNullablePath_shouldThrowException() {
         assertThrows(Exception.class, () -> SystemUtil.readFileLines(null));
+    }
+
+    private boolean isOneOf(final OsType os, final OsType... osTypes) {
+        for (OsType type : osTypes) {
+            if (os == type) {
+                return true;
+            }
+        }
+        return false;
     }
 }

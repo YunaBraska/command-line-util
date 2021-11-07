@@ -20,8 +20,15 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
-import static java.nio.charset.StandardCharsets.*;
-import static java.nio.file.attribute.PosixFilePermission.*;
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
+import static java.nio.charset.StandardCharsets.US_ASCII;
+import static java.nio.charset.StandardCharsets.UTF_16;
+import static java.nio.charset.StandardCharsets.UTF_16BE;
+import static java.nio.charset.StandardCharsets.UTF_16LE;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE;
+import static java.nio.file.attribute.PosixFilePermission.OWNER_READ;
+import static java.nio.file.attribute.PosixFilePermission.OWNER_WRITE;
 import static java.util.Arrays.asList;
 
 @SuppressWarnings("unused")
@@ -31,18 +38,6 @@ public class SystemUtil {
     public static final OsType OS = OsType.of(System.getProperty("os.name"));
     public static final OsArch OS_ARCH = OsArch.of(System.getProperty("os.arch"));
     public static final OsArchType OS_ARCH_TYPE = OsArchType.of(System.getProperty("os.arch"));
-    public static final boolean IS_UNIX = OS.isOneOf(
-            OsType.OS_AIX,
-            OsType.OS_HP_UX,
-            OsType.OS_IRIX,
-            OsType.OS_LINUX,
-            OsType.OS_MAC,
-            OsType.OS_SUN,
-            OsType.OS_SOLARIS,
-            OsType.OS_FREE_BSD,
-            OsType.OS_OPEN_BSD,
-            OsType.OS_NET_BSD
-    );
 
     /**
      * Sets silent file permissions (PosixFilePermissions will be mapped to filePermissions as windows doesn't understand posix)

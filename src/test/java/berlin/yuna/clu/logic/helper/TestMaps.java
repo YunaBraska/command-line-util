@@ -11,7 +11,7 @@ import static berlin.yuna.clu.model.OsType.OS_400;
 import static berlin.yuna.clu.model.OsType.OS_AIX;
 import static berlin.yuna.clu.model.OsType.OS_FREE_BSD;
 import static berlin.yuna.clu.model.OsType.OS_IRIX;
-import static berlin.yuna.clu.model.OsType.OS_MAC;
+import static berlin.yuna.clu.model.OsType.OS_DARWIN;
 import static berlin.yuna.clu.model.OsType.OS_MIPS;
 import static berlin.yuna.clu.model.OsType.OS_OPEN_BSD;
 import static berlin.yuna.clu.model.OsType.OS_SOLARIS;
@@ -30,7 +30,7 @@ public class TestMaps {
         result.put("Windows ME", OS_WINDOWS);
         result.put("Windows XP", OS_WINDOWS);
         result.put("Windows 2003", OS_WINDOWS);
-        result.put("Mac OS X", OS_MAC);
+        result.put("Mac OS X", OS_DARWIN);
         result.put("SunOS", OS_SUN);
         result.put("AiX", OS_AIX);
         result.put("Irix", OS_IRIX);

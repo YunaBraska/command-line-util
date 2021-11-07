@@ -1,5 +1,7 @@
 package berlin.yuna.clu.model;
 
+import static berlin.yuna.clu.model.OsType.osCase;
+
 public enum OsArchType {
     AT_86("x86", "686", "386", "368"),
     AT_64("64"),
@@ -28,5 +30,10 @@ public enum OsArchType {
             }
         }
         return AT_UNKNOWN;
+    }
+
+    @Override
+    public String toString() {
+        return osCase(name(), 3);
     }
 }

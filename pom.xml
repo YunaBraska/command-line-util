@@ -5,13 +5,11 @@
 
     <groupId>berlin.yuna</groupId>
     <artifactId>command-line-util</artifactId>
-    <version>0.1.7</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
 
     <name>${project.artifactId}</name>
-    <description>Simple Command-line-util to get easy access to command line unix/windows - native without any
-        dependencies
-    </description>
+    <description>Simple, small, native library for os detection, reading arguments and running commands</description>
     <url>https://github.com/YunaBraska/config-metadata-generator.git</url>
 
     <scm>

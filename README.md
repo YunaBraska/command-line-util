@@ -14,8 +14,23 @@
 ![Label][label_shield]
 
 ### Description
-Command-line-util to get easy access to command line unix/windows - simple and native without any dependencies
+Simple, small, native library for:
+* Detects OS, ARCH with [SystemUtil](https://github.com/YunaBraska/command-line-util/blob/master/src/main/java/berlin/yuna/clu/logic/SystemUtil.java). (see [OsTypes](https://github.com/YunaBraska/command-line-util/blob/master/src/main/java/berlin/yuna/clu/model/OsType.java), [Arch](https://github.com/YunaBraska/command-line-util/blob/master/src/main/java/berlin/yuna/clu/model/OsArch.java), [ArchType](https://github.com/YunaBraska/command-line-util/blob/master/src/main/java/berlin/yuna/clu/model/OsType.java))
+* Running commands using the [Terminal](https://github.com/YunaBraska/command-line-util/blob/master/src/main/java/berlin/yuna/clu/logic/Terminal.java)
+* Reading arguments with [CommandLineReader](https://github.com/YunaBraska/command-line-util/blob/master/src/main/java/berlin/yuna/clu/logic/CommandLineReader.java)
+Command-line-util to get easy access to command line unix/windows - simple and native without any dependencies.
 For more professional you can use [plexus-utils](https://github.com/sonatype/plexus-utils/tree/master/src/main/java/org/codehaus/plexus/util/cli) [commons-cli](https://commons.apache.org/proper/commons-cli/)
+
+### Usage
+
+```xml
+
+<dependency>
+    <groupId>berlin.yuna</groupId>
+    <artifactId>nats-server</artifactId>
+    <version>2.6.1</version>
+</dependency>
+```
 
 ### \[Example\] Parsing command line
 ````java

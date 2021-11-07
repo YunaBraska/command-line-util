@@ -27,8 +27,8 @@ For more professional you can use [plexus-utils](https://github.com/sonatype/ple
 
 <dependency>
     <groupId>berlin.yuna</groupId>
-    <artifactId>nats-server</artifactId>
-    <version>2.6.1</version>
+    <artifactId>command-line-util</artifactId>
+    <version>1.0.0</version>
 </dependency>
 ```
 

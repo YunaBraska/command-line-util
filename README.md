@@ -15,11 +15,11 @@
 
 ### Description
 Simple, small, native library for:
-* Detects OS, ARCH with [SystemUtil](https://github.com/YunaBraska/command-line-util/blob/master/src/main/java/berlin/yuna/clu/logic/SystemUtil.java). (see [OsTypes](https://github.com/YunaBraska/command-line-util/blob/master/src/main/java/berlin/yuna/clu/model/OsType.java), [Arch](https://github.com/YunaBraska/command-line-util/blob/master/src/main/java/berlin/yuna/clu/model/OsArch.java), [ArchType](https://github.com/YunaBraska/command-line-util/blob/master/src/main/java/berlin/yuna/clu/model/OsType.java))
-* Running commands using the [Terminal](https://github.com/YunaBraska/command-line-util/blob/master/src/main/java/berlin/yuna/clu/logic/Terminal.java)
-* Reading arguments with [CommandLineReader](https://github.com/YunaBraska/command-line-util/blob/master/src/main/java/berlin/yuna/clu/logic/CommandLineReader.java)
+* Detects OS, ARCH with [SystemUtil](https://github.com/YunaBraska/command-line-util/blob/main/src/main/java/berlin/yuna/clu/logic/SystemUtil.java). (see [OsTypes](https://github.com/YunaBraska/command-line-util/blob/main/src/main/java/berlin/yuna/clu/model/OsType.java), [Arch](https://github.com/YunaBraska/command-line-util/blob/master/src/main/java/berlin/yuna/clu/model/OsArch.java), [ArchType](https://github.com/YunaBraska/command-line-util/blob/master/src/main/java/berlin/yuna/clu/model/OsType.java))
+* Running commands using the [Terminal](https://github.com/YunaBraska/command-line-util/blob/main/src/main/java/berlin/yuna/clu/logic/Terminal.java)
+* Reading arguments with [CommandLineReader](https://github.com/YunaBraska/command-line-util/blob/main/src/main/java/berlin/yuna/clu/logic/CommandLineReader.java)
 Command-line-util to get easy access to command line unix/windows - simple and native without any dependencies.
-For more professional you can use [plexus-utils](https://github.com/sonatype/plexus-utils/tree/master/src/main/java/org/codehaus/plexus/util/cli) [commons-cli](https://commons.apache.org/proper/commons-cli/)
+For more professional you can use [plexus-utils](https://github.com/sonatype/plexus-utils/tree/main/src/main/java/org/codehaus/plexus/util/cli) [commons-cli](https://commons.apache.org/proper/commons-cli/)
 
 ### Usage
 
@@ -89,11 +89,11 @@ boolean removed = SystemUtil.deleteDirectory
 [coverage_shield]: https://img.shields.io/codeclimate/coverage/YunaBraska/command-line-util?style=flat-square
 [coverage_link]: https://codeclimate.com/github/YunaBraska/command-line-util/test_coverage
 [issues_shield]: https://img.shields.io/github/issues/YunaBraska/command-line-util?style=flat-square
-[issues_link]: https://github.com/YunaBraska/command-line-util/commits/master
+[issues_link]: https://github.com/YunaBraska/command-line-util/commits/main
 [commit_shield]: https://img.shields.io/github/last-commit/YunaBraska/command-line-util?style=flat-square
 [commit_link]: https://github.com/YunaBraska/command-line-util/issues
 [license_shield]: https://img.shields.io/github/license/YunaBraska/command-line-util?style=flat-square
-[license_link]: https://github.com/YunaBraska/command-line-util/blob/master/LICENSE
+[license_link]: https://github.com/YunaBraska/command-line-util/blob/main/LICENSE
 [dependency_shield]: https://img.shields.io/librariesio/github/YunaBraska/command-line-util?style=flat-square
 [dependency_link]: https://libraries.io/github/YunaBraska/command-line-util
 [central_shield]: https://img.shields.io/maven-central/v/berlin.yuna/command-line-util?style=flat-square

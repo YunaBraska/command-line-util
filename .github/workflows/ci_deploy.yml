@@ -1,24 +1,19 @@
-# This workflow will build a Java project with Maven
-# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
-
-name: JAVA_CI_DAILY
-
+# Ansible managed
+name: JAVA_CI_DEPLOY
 on:
   workflow_dispatch:
-    branches: [ main ]
-  deployment:
-    branches: [ main ]
+    branches: ['main']
   schedule:
-    - cron: '0 1 * * *'
+    - cron: "0 3 * * *"
 
 env:
+  SPRING_PROFILE: ci
   ACTIONS_ALLOW_UNSECURE_COMMANDS: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      #START_FILL_WITH UPDATE_AND_TEST
       - uses: actions/checkout@v2
       - name: Set up JDK 8
         uses: actions/setup-java@v1
@@ -26,15 +21,11 @@ jobs:
           java-version: 8
       - name: Maven compile and update dependencies
         run: |
+          ./mvnw -B -N io.takari:maven:wrapper
           ./mvnw -B -q versions:update-properties -DgenerateBackupPoms=false
           ./mvnw -B -q clean verify -Dmaven.test.skip=true
       - name: Run tests
         run: ./mvnw -B clean verify
-      - name: Publish code coverage
-        uses: codecov/codecov-action@v1
-        with:
-          fail_ci_if_error: true
-          verbose: false
       - name: Publish code quality
         uses: paambaati/codeclimate-action@v2.7.4
         env:
@@ -43,8 +34,12 @@ jobs:
         with:
           coverageLocations: ${{github.workspace}}/target/site/jacoco/jacoco.xml:jacoco
       - name: Tag and Push
-        run: .github/scripts/push_changes.sh "https://x-access-token:${{ secrets.CI_TOKEN }}@github.com/${{ github.repository }}"
-      #END_FILL_WITH UPDATE_AND_TEST
+        run: |
+          wget -nc https://raw.githubusercontent.com/YunaBraska/YunaBraska/main/.github/scripts/versions.sh -P .github/scripts
+          wget -nc https://raw.githubusercontent.com/YunaBraska/YunaBraska/main/.github/scripts/push_changes.sh -P .github/scripts
+          wget -nc https://raw.githubusercontent.com/YunaBraska/YunaBraska/main/.github/scripts/increment_version.sh -P .github/scripts
+          chmod +x .github/scripts/versions.sh .github/scripts/push_changes.sh .github/scripts/increment_version.sh
+          .github/scripts/push_changes.sh "https://x-access-token:${{ secrets.CI_TOKEN }}@github.com/${{ github.repository }}"
       - name: "Check if branch exists"
         run: |
           git fetch origin release:release &>/dev/null || true
@@ -73,4 +68,3 @@ jobs:
       - name: "Remove release branch"
         run: |
           git push --delete origin release &>/dev/null || true
-

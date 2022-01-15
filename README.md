@@ -32,15 +32,35 @@ For more professional you can use [plexus-utils](https://github.com/sonatype/ple
 </dependency>
 ```
 
-### \[Example\] Parsing command line
+### \[Example\] Argument Parser
+
 ````java
-//it extends a HashMap
-final CommandLineReader clr = new CommandLineReader("command_1 command_2 --help -v=\"true\" --verbose=\"true\" -list=\"item 1\" --list=\"item 2\" --list=\"-item 3\"  ");
-    clr.getCommand() //returns "command_1"
-    clr.getCommand(1) //returns "command_2"
-    clr.isPresent("hElp"); //returns true (caseInsensitive)
-    clr.getValue("v", "verbose"); //returns "true" (first value of both)
-    clr.getValue(1, "list"); //returns "item 2"
+public class ArgumentParserTest {
+    
+    public void parseArgsTest() {
+        //false == without environment variables
+        final ArgumentReader args = parseArgs(false, "mvn clean install --Dencoding=\"UTF-8\" --javaVersion 8 -v=true --args=1,2,3", "--args=4,5");
+        args.size(); // = 4
+        args.getCommands(); // = 3
+        args.hasCommand("install"); // = true
+
+        //ARGUMENTS & TYPES
+        args.getString("Dencoding"); // = "UTF-8"
+        args.getBoolean("v"); // = true
+        args.getLong("javaVersion"); // = 8
+        args.getDouble("javaVersion"); // = 8.0
+
+        //ARGUMENTS & SPLITTING & INDEXING
+        args.getLong("-", 1, "Dencoding"); // = 8
+
+        //DUPLICATES & LISTING & INDEXING
+        args.getString("args"); // = "1,2,3"
+        args.getString(1, "args"); // = "4,5"
+        args.getStrings(',', "args"); // = ["1","2","3","4","5"]
+        args.getLongs(',', "args"); // = [1,2,3,4,5]
+        validateReadmeExample(args);
+    }
+}
 ````
 
 ### \[Example\] Terminal execute command

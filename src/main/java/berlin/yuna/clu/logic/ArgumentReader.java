@@ -394,11 +394,12 @@ public class ArgumentReader extends ConcurrentHashMap<String, List<String>> {
         return new ArrayList<>(new LinkedHashSet<>(result));
     }
 
-    private void parseEnvironment() {
+    public ArgumentReader parseEnvironment() {
         System.getProperties().forEach((key, value) -> addKV(String.valueOf(key), String.valueOf(value)));
+        return this;
     }
 
-    private void parseCommandLine(final String input) {
+    private ArgumentReader parseCommandLine(final String input) {
         final String process = parseCommands(input);
 
         for (String argument : (" " + process).split(" --| -")) {
@@ -415,14 +416,16 @@ public class ArgumentReader extends ConcurrentHashMap<String, List<String>> {
 
             addKV(key, value);
         }
+        return this;
     }
 
-    private void addKV(final String key, final String value) {
+    private ArgumentReader addKV(final String key, final String value) {
         final List<String> valueList = new ArrayList<>(get(key));
         if (value == null || !valueList.contains(value)) {
             valueList.add(value);
         }
         this.put(key, valueList);
+        return this;
     }
 
     private String parseCommands(final String input) {
@@ -435,12 +438,13 @@ public class ArgumentReader extends ConcurrentHashMap<String, List<String>> {
         return result.trim();
     }
 
-    private void addCommands(final String[] cmdList) {
+    private ArgumentReader addCommands(final String[] cmdList) {
         for (String cmd : cmdList) {
             if (!cmd.isEmpty()) {
                 commandList.add(cmd.trim());
             }
         }
+        return this;
     }
 
     private String getStripedValue(final String value) {

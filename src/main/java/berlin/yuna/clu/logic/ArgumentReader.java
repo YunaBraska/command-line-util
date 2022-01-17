@@ -63,7 +63,7 @@ public class ArgumentReader extends ConcurrentHashMap<String, List<String>> {
      *
      * @param args strings with arguments
      */
-    private ArgumentReader(final boolean parseEnv, final String... args) {
+    protected ArgumentReader(final boolean parseEnv, final String... args) {
         final StringBuilder builder = new StringBuilder();
         for (String current : args) {
             builder.append(" ").append(current);

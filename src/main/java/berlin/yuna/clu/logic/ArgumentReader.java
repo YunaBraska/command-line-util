@@ -15,7 +15,7 @@ import static java.util.Arrays.stream;
 
 public class ArgumentReader extends ConcurrentHashMap<String, List<String>> {
 
-    private final List<String> commandList = new ArrayList<>();
+    protected final List<String> commandList = new ArrayList<>();
 
     /**
      * Parses a string arguments into key values <br>
@@ -390,7 +390,7 @@ public class ArgumentReader extends ConcurrentHashMap<String, List<String>> {
         return separator == null ? result : result.stream().flatMap(s -> stream(s.split(separator)).filter(sp -> !sp.isEmpty())).collect(Collectors.toList());
     }
 
-    private List<String> removeDuplicates(final List<String> result) {
+    protected List<String> removeDuplicates(final List<String> result) {
         return new ArrayList<>(new LinkedHashSet<>(result));
     }
 
@@ -399,7 +399,7 @@ public class ArgumentReader extends ConcurrentHashMap<String, List<String>> {
         return this;
     }
 
-    private ArgumentReader parseCommandLine(final String input) {
+    protected ArgumentReader parseCommandLine(final String input) {
         final String process = parseCommands(input);
 
         for (String argument : (" " + process).split(" --| -")) {
@@ -419,7 +419,7 @@ public class ArgumentReader extends ConcurrentHashMap<String, List<String>> {
         return this;
     }
 
-    private ArgumentReader addKV(final String key, final String value) {
+    protected ArgumentReader addKV(final String key, final String value) {
         final List<String> valueList = new ArrayList<>(get(key));
         if (value == null || !valueList.contains(value)) {
             valueList.add(value);
@@ -428,7 +428,7 @@ public class ArgumentReader extends ConcurrentHashMap<String, List<String>> {
         return this;
     }
 
-    private String parseCommands(final String input) {
+    protected String parseCommands(final String input) {
         String result = input.trim();
         if (result.contains("-")) {
             final String[] cmdList = result.substring(0, result.indexOf('-')).trim().split(" ");
@@ -438,7 +438,7 @@ public class ArgumentReader extends ConcurrentHashMap<String, List<String>> {
         return result.trim();
     }
 
-    private ArgumentReader addCommands(final String[] cmdList) {
+    protected ArgumentReader addCommands(final String[] cmdList) {
         for (String cmd : cmdList) {
             if (!cmd.isEmpty()) {
                 commandList.add(cmd.trim());
@@ -447,7 +447,7 @@ public class ArgumentReader extends ConcurrentHashMap<String, List<String>> {
         return this;
     }
 
-    private String getStripedValue(final String value) {
+    protected String getStripedValue(final String value) {
         String result = value == null ? "" : value.trim();
         if ((result.startsWith("'") && result.endsWith("'")) || result.startsWith("\"") && result.endsWith("\"")) {
             result = result.substring(1, result.length() - 1);
@@ -455,7 +455,7 @@ public class ArgumentReader extends ConcurrentHashMap<String, List<String>> {
         return result;
     }
 
-    private String[] parseToKeyValue(final String argument) {
+    protected String[] parseToKeyValue(final String argument) {
         if (argument.indexOf('=') != -1) {
             return argument.split("=");
         } else if (argument.indexOf(' ') != -1) {
@@ -465,7 +465,7 @@ public class ArgumentReader extends ConcurrentHashMap<String, List<String>> {
         return new String[]{argument, null};
     }
 
-    private List<String> getValues(final String separator, final String[] keys) {
+    protected List<String> getValues(final String separator, final String[] keys) {
         List<String> result = new ArrayList<>();
         for (String key : keys) {
             result.addAll(get(separator, key));
@@ -483,17 +483,17 @@ public class ArgumentReader extends ConcurrentHashMap<String, List<String>> {
      * @param separator handles values as list if present
      * @return value or null if no value was found
      */
-    private String getValue(final String separator, final int index, final String... keys) {
+    protected String getValue(final String separator, final int index, final String... keys) {
         final List<String> result = getValues(separator, keys);
         return result.isEmpty() || result.size() - 1 < index ? null : result.get(index);
     }
 
-    private Function<String, Boolean> toBoolean() {
+    protected Function<String, Boolean> toBoolean() {
         return s -> "true".equalsIgnoreCase(s) || "1".equals(s);
     }
 
     @SuppressWarnings("java:S3358")
-    private Function<String, Long> toLong() {
+    protected Function<String, Long> toLong() {
         return s -> {
             try {
                 return s.equalsIgnoreCase("true")
@@ -508,7 +508,7 @@ public class ArgumentReader extends ConcurrentHashMap<String, List<String>> {
     }
 
     @SuppressWarnings("java:S3358")
-    private Function<String, Double> toDouble() {
+    protected Function<String, Double> toDouble() {
         return s -> {
             try {
                 return s.equalsIgnoreCase("true")

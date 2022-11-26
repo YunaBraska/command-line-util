@@ -16,6 +16,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 
+@SuppressWarnings("ResultOfMethodCallIgnored")
 @Tag("UnitTest")
 class ArgumentReaderTest {
 

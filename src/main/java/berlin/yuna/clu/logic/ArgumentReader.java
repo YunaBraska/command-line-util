@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import static java.util.Arrays.stream;
 
 
+@SuppressWarnings("UnusedReturnValue")
 public class ArgumentReader extends ConcurrentHashMap<String, List<String>> {
 
     protected final List<String> commandList = new ArrayList<>();

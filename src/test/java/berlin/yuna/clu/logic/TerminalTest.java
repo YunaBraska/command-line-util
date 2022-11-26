@@ -10,7 +10,12 @@ import java.nio.file.Paths;
 
 import static berlin.yuna.clu.model.OsType.OS_LINUX;
 import static berlin.yuna.clu.model.OsType.OS_WINDOWS;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -126,14 +131,14 @@ class TerminalTest {
     @Test
     void execute_ShouldContainSystemPropertiesAsWell() {
         System.setProperty("aa", "bb");
-        final String console = terminal.timeoutMs(256).execute("echo $aa").consoleInfo();
+        final String console = terminal.execute("echo $aa").consoleInfo();
         assertThat(console, containsString("bb"));
         assertThat(console, not(containsString("aa")));
     }
 
     @Test
     void copyOf_shouldCopyTerminal() {
-        final Terminal input = new Terminal().waitFor(128);
+        final Terminal input = new Terminal().waitFor(10);
         input.execute("echo \"Howdy\"");
         input.dir("inputDir");
         input.consumerInfoStream(System.out::println);
@@ -151,5 +156,7 @@ class TerminalTest {
         assertThat(input.breakOnError(), is(equalTo(output.breakOnError())));
         assertThat((input.consoleInfo() + input.consoleError()).length(),
                 is(not((output.consoleInfo() + output.consoleError()).length())));
+        assertThat(input.consoleInfoList().size(), is(not(output.consoleInfoList().size())));
+        assertThat(input.consoleErrorList().size(), is(output.consoleErrorList().size()));
     }
 }

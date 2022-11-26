@@ -66,8 +66,8 @@ class SystemUtilTest {
     @Test
     void testOsArch() {
         for (Map.Entry<String, TestMaps.ExpectedArch> test : ARCH_TEST_MAP.entrySet()) {
-            assertThat("Input was " + test.getKey(), OsArch.of(test.getKey()), is(test.getValue().getOsArch()));
-            assertThat("Input was " + test.getKey(), OsArchType.of(test.getKey()), is(test.getValue().getOsArchType()));
+            assertThat("Input was " + test.getKey(), OsArch.of(test.getKey()), is(test.getValue().osArch()));
+            assertThat("Input was " + test.getKey(), OsArchType.of(test.getKey()), is(test.getValue().osArchType()));
         }
     }
 
@@ -97,11 +97,11 @@ class SystemUtilTest {
 
     @Test
     void getKillCommand_shouldReturnRightCommand() {
-        assertThat(SystemUtil.getKillCommand(OsType.OS_WINDOWS), is(equalTo("taskkill /F /IM")));
-        assertThat(SystemUtil.getKillCommand(OsType.OS_DARWIN), is(equalTo("pkill -f")));
-        assertThat(SystemUtil.getKillCommand(OsType.OS_LINUX), is(equalTo("pkill -f")));
-        assertThat(SystemUtil.getKillCommand(OsType.OS_SOLARIS), is(equalTo("killall")));
-        assertThat(SystemUtil.getKillCommand(OsType.OS_UNKNOWN), is(equalTo("killall")));
+        assertThat(SystemUtil.killCommand(OsType.OS_WINDOWS), is(equalTo("taskkill /F /IM")));
+        assertThat(SystemUtil.killCommand(OsType.OS_DARWIN), is(equalTo("pkill -f")));
+        assertThat(SystemUtil.killCommand(OsType.OS_LINUX), is(equalTo("pkill -f")));
+        assertThat(SystemUtil.killCommand(OsType.OS_SOLARIS), is(equalTo("killall")));
+        assertThat(SystemUtil.killCommand(OsType.OS_UNKNOWN), is(equalTo("killall")));
     }
 
     @Test
@@ -148,7 +148,6 @@ class SystemUtilTest {
 
     @Test
     void newInstance_smokeTest() {
-        assertThat(new SystemUtil(), is(notNullValue()));
         assertThat(new TerminalExecutionException("Test") instanceof RuntimeException, is(true));
         assertThat(new FileCopyException("Test", new RuntimeException()) instanceof RuntimeException, is(true));
     }

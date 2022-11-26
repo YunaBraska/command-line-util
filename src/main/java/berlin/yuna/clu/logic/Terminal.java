@@ -11,11 +11,14 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.Collections.singletonList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 
 @SuppressWarnings("unused")
@@ -23,12 +26,13 @@ public class Terminal {
 
     private Process process;
 
+    private final AtomicBoolean running = new AtomicBoolean(false);
+    private final AtomicInteger status = new AtomicInteger(0);
     private final CommandOutput commandOutput = new CommandOutput();
     private final CommandOutput tmpOutput = new CommandOutput();
 
-    private int status = 0;
     private long timeoutMs = -1;
-    private long waitForMs = 256;
+    private long waitForMs = 5;
     private boolean breakOnError = false;
     private File dir = new File(System.getProperty("user.dir"));
 
@@ -39,13 +43,13 @@ public class Terminal {
      * @return new terminal copy
      */
     public static Terminal copyOf(final Terminal terminal) {
-        final Terminal term = new Terminal();
-        term.breakOnError(terminal.breakOnError);
-        term.timeoutMs(terminal.timeoutMs);
-        term.status = terminal.status;
-        term.waitForMs = terminal.waitForMs;
-        term.dir(terminal.dir);
-        return term;
+        final var result = new Terminal();
+        result.breakOnError(terminal.breakOnError);
+        result.timeoutMs(terminal.timeoutMs);
+        result.status.set(terminal.status.get());
+        result.waitForMs = terminal.waitForMs;
+        result.dir(terminal.dir);
+        return result;
     }
 
     /**
@@ -157,7 +161,7 @@ public class Terminal {
     }
 
     /**
-     * @return set ms to wait after execution if the command is faster than logging its messages (default=256)
+     * @return set ms to wait after execution if the command is faster than logging its messages (default=5)
      * @see Terminal#execute(String, long)
      */
     public Terminal waitFor(final long waitForMs) {
@@ -207,10 +211,28 @@ public class Terminal {
     }
 
     /**
+     * @return returns the console output as list
+     */
+    public List<String> consoleInfoList() {
+        final var result = new ArrayList<>(commandOutput.consoleInfo);
+        result.addAll(tmpOutput.consoleInfo);
+        return result;
+    }
+
+    /**
      * @return returns the console error output
      */
     public String consoleError() {
         return commandOutput.consoleError() + tmpOutput.consoleError();
+    }
+
+    /**
+     * @return returns the console error as list
+     */
+    public List<String> consoleErrorList() {
+        final var result = new ArrayList<>(commandOutput.consoleError);
+        result.addAll(tmpOutput.consoleError);
+        return result;
     }
 
     /**
@@ -234,26 +256,29 @@ public class Terminal {
      * @param waitForMs overwrites default {@link Terminal#waitFor(long)} for this call
      * @return a new {@link Process} object for managing the sub process
      */
-    public Terminal execute(final String command, final long waitForMs) {
+    public synchronized Terminal execute(final String command, final long waitForMs) {
         try {
+            running.set(true);
             process = process(command);
-            if (timeoutMs == -1L) {
-                process.waitFor();
-            } else {
-                waitFor(command);
-            }
+            process.onExit().thenApply(p -> {
+                running.set(false);
+                return p;
+            });
 
-//            Java 9 feature process.onExit().thenApply(p -> clearTmpOutput());
-
-            waitForConsoleOutput(waitForMs <= 0 ? 256 : waitForMs);
-            final String error = tmpOutput.consoleError();
-            status = clearTmpOutput();
-            if (breakOnError && status != 0) {
-                throw new IllegalStateException("[" + dir.getName() + "] [" + command + "] " + error);
-            }
+            waitUntilDone(process, timeoutMs, waitForMs);
+            status.set(clearTmpOutput(process));
+            handleConsoleError(breakOnError, status.get(), command);
             return this;
         } catch (IOException | InterruptedException e) {
-            throw new TerminalExecutionException("Unable to execute [" + command + "]", e);
+            throw new TerminalExecutionException("Failed to run dir command [" + command + "] in dir [" + dir.getName() + "]", e);
+        } finally {
+            running.set(false);
+        }
+    }
+
+    private void handleConsoleError(final boolean breakOnError, final int status, final String command) {
+        if (breakOnError && status != 0) {
+            throw new IllegalStateException("Failed to run dir command [" + command + "] in dir [" + dir.getName() + "] output [" + tmpOutput.consoleError() + "]");
         }
     }
 
@@ -265,23 +290,23 @@ public class Terminal {
      * @throws IOException if an I/O error occurs
      */
     public Process process(final String command) throws IOException {
-        final ProcessBuilder builder = new ProcessBuilder();
+        final var builder = new ProcessBuilder();
         builder.directory(dir);
         System.getProperties().forEach((key, value) -> builder.environment().put(key.toString(), value.toString()));
         builder.command(addExecutor(SystemUtil.OS, command));
-        final Process process = builder.start();
+        final var result = builder.start();
 
-        Executors.newSingleThreadExecutor().submit(new StreamGobbler(process.getInputStream(), singletonList(tmpOutput::consoleInfo)));
-        Executors.newSingleThreadExecutor().submit(new StreamGobbler(process.getErrorStream(), singletonList(tmpOutput::consoleError)));
+        Executors.newSingleThreadExecutor().submit(new StreamGobbler(result.getInputStream(), singletonList(tmpOutput::consoleInfo)));
+        Executors.newSingleThreadExecutor().submit(new StreamGobbler(result.getErrorStream(), singletonList(tmpOutput::consoleError)));
 
-        return process;
+        return result;
     }
 
     /**
      * @return status code from last command {@link Process#waitFor()}
      */
     public int status() {
-        return status;
+        return status.get();
     }
 
     String[] addExecutor(final OsType os, final String command) {
@@ -292,37 +317,30 @@ public class Terminal {
         }
     }
 
-    private void waitFor(final String command) throws InterruptedException {
-        status = 0;
-        int count;
-        final long startTime = System.currentTimeMillis();
-        do {
-            count = countTerminalMessages();
-            Thread.sleep(timeoutMs / 40);
-        }
-        while ((count == 0 || count != (countTerminalMessages())) && (System.currentTimeMillis() - startTime) < timeoutMs);
-
-        if ((System.currentTimeMillis() - startTime) > timeoutMs) {
-            throw new TerminalExecutionException("Execution got timed out [" + command + "]");
-        }
-    }
-
-    public int countTerminalMessages() {
+    public int messageCount() {
         return commandOutput.consoleInfo.size()
                 + commandOutput.consoleError.size()
                 + tmpOutput.consoleInfo.size()
                 + tmpOutput.consoleError.size();
     }
 
-    private void waitForConsoleOutput(final long waitForMs) throws InterruptedException {
-        int count;
-        do {
-            count = countTerminalMessages();
-            Thread.sleep(waitForMs);
-        } while (count != countTerminalMessages());
+    private synchronized void waitUntilDone(final Process process, final long timeoutMs, final long waitForMs) throws InterruptedException {
+        process.waitFor(timeoutMs < 1 ? 10000 : timeoutMs, MILLISECONDS);
+        final long waitMs = waitForMs < 1 ? 5 : waitForMs;
+        while (running.get()) {
+            this.wait(waitMs);
+        }
+
+        var count = messageCount();
+        if ((waitForMs < 1 && count == 0) || waitForMs > 0) {
+            do {
+                count = messageCount();
+                this.wait(waitMs);
+            } while (count != messageCount());
+        }
     }
 
-    private int clearTmpOutput() {
+    private int clearTmpOutput(final Process process) {
         int outputStatus;
         try {
             outputStatus = process.exitValue();

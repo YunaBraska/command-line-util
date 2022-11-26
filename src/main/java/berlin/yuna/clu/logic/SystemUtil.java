@@ -11,6 +11,7 @@ import berlin.yuna.clu.model.exception.FileNotReadableException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.MalformedInputException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
@@ -18,8 +19,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Stream;
+import java.util.concurrent.atomic.AtomicReference;
 
+import static java.nio.charset.Charset.defaultCharset;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.nio.charset.StandardCharsets.UTF_16;
@@ -47,7 +49,7 @@ public class SystemUtil {
      * @return true if no error occurred and if permissions are set successfully
      */
     public static boolean setFilePermissions(final Path path, final PosixFilePermission... permissions) {
-        final File destination = path.toFile();
+        final var destination = path.toFile();
         for (PosixFilePermission permission : permissions) {
             if (!setFilePermission(destination, permission)) {
                 return false;
@@ -64,7 +66,7 @@ public class SystemUtil {
      * @return temp path from copied file output
      */
     public static Path copyResourceToTemp(final Class<?> clazz, final String relativePath) {
-        final File tmpFile = new File(TMP_DIR, new File(relativePath).getName());
+        final var tmpFile = new File(TMP_DIR, new File(relativePath).getName());
         if (!tmpFile.exists()) {
             try {
                 Files.copy(Objects.requireNonNull(clazz.getClassLoader().getResourceAsStream(relativePath)), tmpFile.toPath());
@@ -83,22 +85,24 @@ public class SystemUtil {
      */
     public static String readFile(final Path path) {
         try {
-            return tryCharsets(charset -> new String(Files.readAllBytes(path), charset));
+            return tryCharsets(charset -> Files.readString(path, charset));
         } catch (Exception e) {
             throw new FileNotReadableException("Could not read file [" + path + "]", e);
         }
     }
 
     private static <T> T tryCharsets(final ThrowingFunction<Charset, T> function) throws Exception {
-        Exception last = null;
-        for (Charset charset : asList(UTF_8, UTF_16, UTF_16BE, UTF_16LE, ISO_8859_1, US_ASCII)) {
+        final var latestException = new AtomicReference<Exception>(null);
+        for (Charset charset : asList(defaultCharset(), UTF_8, UTF_16, UTF_16BE, UTF_16LE, ISO_8859_1, US_ASCII)) {
             try {
                 return function.acceptThrows(charset);
             } catch (Exception e) {
-                last = e;
+                latestException.set(e);
+            } catch (Error e) {
+                latestException.set(new MalformedInputException(2));
             }
         }
-        throw last;
+        throw latestException.get();
     }
 
     /**
@@ -122,12 +126,19 @@ public class SystemUtil {
      * @return false on exception and any deletion error
      */
     public static boolean deleteDirectory(final Path path) {
-        final AtomicBoolean success = new AtomicBoolean(true);
+        final var success = new AtomicBoolean(true);
 
-        try (final Stream<Path> stream = Files.walk(path)) {
-            stream.sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(file -> success.set((success.get() && file.delete()) && success.get()));
+        try (final var stream = Files.walk(path)) {
+            stream.sorted(Comparator.reverseOrder())
+                    .forEach(file -> {
+                        try {
+                            Files.delete(file);
+                        } catch (IOException e) {
+                            success.set(false);
+                        }
+                    });
         } catch (IOException ex) {
-            return success.get();
+            return false;
         }
         return success.get();
     }
@@ -138,40 +149,26 @@ public class SystemUtil {
      * @param name name of the process to kill
      */
     public static void killProcessByName(final String name) {
-        new Terminal().execute(getKillCommand(OS) + " " + name);
+        new Terminal().execute(killCommand(OS) + " " + name);
     }
 
-    static String getKillCommand(final OsType os) {
-        switch (os) {
-            case OS_WINDOWS:
-                return "taskkill /F /IM";
-            case OS_SOLARIS:
-            case OS_UNKNOWN:
-                return "killall";
-            default:
-                return "pkill -f";
-        }
+    public static String killCommand(final OsType os) {
+        return switch (os) {
+            case OS_WINDOWS -> "taskkill /F /IM";
+            case OS_SOLARIS, OS_UNKNOWN -> "killall";
+            default -> "pkill -f";
+        };
+    }
+
+    private SystemUtil() {
     }
 
     private static boolean setFilePermission(final File destination, final PosixFilePermission permission) {
-        boolean successState = false;
-        switch (permission) {
-            case OWNER_WRITE:
-            case GROUP_WRITE:
-            case OTHERS_WRITE:
-                successState = destination.setWritable(true, permission == OWNER_WRITE);
-                break;
-            case OWNER_READ:
-            case GROUP_READ:
-            case OTHERS_READ:
-                successState = destination.setReadable(true, permission == OWNER_READ);
-                break;
-            case OWNER_EXECUTE:
-            case GROUP_EXECUTE:
-            case OTHERS_EXECUTE:
-                successState = destination.setExecutable(true, permission == OWNER_EXECUTE);
-                break;
-        }
-        return successState;
+        return switch (permission) {
+            case OWNER_WRITE, GROUP_WRITE, OTHERS_WRITE -> destination.setWritable(true, permission == OWNER_WRITE);
+            case OWNER_READ, GROUP_READ, OTHERS_READ -> destination.setReadable(true, permission == OWNER_READ);
+            case OWNER_EXECUTE, GROUP_EXECUTE, OTHERS_EXECUTE ->
+                    destination.setExecutable(true, permission == OWNER_EXECUTE);
+        };
     }
 }

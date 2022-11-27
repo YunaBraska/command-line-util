@@ -2,6 +2,7 @@ package berlin.yuna.clu.model;
 
 import java.util.function.Function;
 
+@SuppressWarnings("JavadocDeclaration")
 @FunctionalInterface
 public interface ThrowingFunction<T, R> extends Function<T, R> {
 

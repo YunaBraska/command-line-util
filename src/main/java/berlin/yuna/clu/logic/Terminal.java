@@ -10,9 +10,11 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 import static java.util.Arrays.asList;
@@ -21,19 +23,17 @@ import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "UnusedReturnValue"})
 public class Terminal {
 
-    private Process process;
-
+    private final AtomicLong timeoutMs = new AtomicLong(-1);
+    private final AtomicLong waitForMs = new AtomicLong(5);
+    private final AtomicBoolean breakOnError = new AtomicBoolean(false);
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final AtomicInteger status = new AtomicInteger(0);
     private final CommandOutput commandOutput = new CommandOutput();
     private final CommandOutput tmpOutput = new CommandOutput();
-
-    private long timeoutMs = -1;
-    private long waitForMs = 5;
-    private boolean breakOnError = false;
+    private Process process;
     private File dir = new File(System.getProperty("user.dir"));
 
     /**
@@ -44,10 +44,10 @@ public class Terminal {
      */
     public static Terminal copyOf(final Terminal terminal) {
         final var result = new Terminal();
-        result.breakOnError(terminal.breakOnError);
-        result.timeoutMs(terminal.timeoutMs);
+        result.breakOnError.set(terminal.breakOnError.get());
+        result.timeoutMs.set(terminal.timeoutMs.get());
         result.status.set(terminal.status.get());
-        result.waitForMs = terminal.waitForMs;
+        result.waitForMs.set(terminal.waitForMs.get());
         result.dir(terminal.dir);
         return result;
     }
@@ -84,31 +84,11 @@ public class Terminal {
     }
 
     /**
-     * @param consumerError consumer for console exit code info
-     * @return Terminal
-     */
-    @SafeVarargs
-    public final Terminal consumerInfo(final Consumer<String>... consumerError) {
-        this.commandOutput.consumerInfo.addAll(asList(consumerError));
-        return this;
-    }
-
-    /**
-     * @param consumerError consumer for console exit code errors
-     * @return Terminal
-     */
-    @SafeVarargs
-    public final Terminal consumerError(final Consumer<String>... consumerError) {
-        this.commandOutput.consumerError.addAll(asList(consumerError));
-        return this;
-    }
-
-    /**
      * @return timeout in milliseconds
      * @see Terminal#timeoutMs(long)
      */
     public long timeoutMs() {
-        return timeoutMs;
+        return timeoutMs.get();
     }
 
     /**
@@ -121,7 +101,7 @@ public class Terminal {
      * @return Terminal
      */
     public Terminal timeoutMs(final long timeoutMs) {
-        this.timeoutMs = timeoutMs;
+        this.timeoutMs.set(timeoutMs);
         return this;
     }
 
@@ -130,7 +110,7 @@ public class Terminal {
      * @see Terminal#breakOnError(boolean)
      */
     public boolean breakOnError() {
-        return breakOnError;
+        return breakOnError.get();
     }
 
     /**
@@ -140,7 +120,7 @@ public class Terminal {
      * @return Terminal
      */
     public Terminal breakOnError(final boolean breakOnError) {
-        this.breakOnError = breakOnError;
+        this.breakOnError.set(breakOnError);
         return this;
     }
 
@@ -154,18 +134,18 @@ public class Terminal {
 
     /**
      * @return wait time after command exited
-     * @see Terminal#execute(String, long)
+     * @see Terminal#execute(String, Long)
      */
     public long waitFor() {
-        return waitForMs;
+        return waitForMs.get();
     }
 
     /**
      * @return set ms to wait after execution if the command is faster than logging its messages (default=5)
-     * @see Terminal#execute(String, long)
+     * @see Terminal#execute(String, Long)
      */
     public Terminal waitFor(final long waitForMs) {
-        this.waitForMs = waitForMs;
+        this.waitForMs.set(waitForMs);
         return this;
     }
 
@@ -244,7 +224,7 @@ public class Terminal {
      * @return a new {@link Process} object for managing the sub process
      */
     public Terminal execute(final String command) {
-        return execute(command, waitForMs);
+        return execute(command, waitForMs.get());
     }
 
     /**
@@ -253,32 +233,28 @@ public class Terminal {
      * {@link Terminal#timeoutMs(long)} if timeout is needed
      *
      * @param command   command to execute
-     * @param waitForMs overwrites default {@link Terminal#waitFor(long)} for this call
+     * @param waitForMs overwrites default {@link Terminal#waitFor(long)} for this call - null = async
      * @return a new {@link Process} object for managing the sub process
      */
-    public synchronized Terminal execute(final String command, final long waitForMs) {
+    public synchronized Terminal execute(final String command, final Long waitForMs) {
         try {
             running.set(true);
             process = process(command);
             process.onExit().thenApply(p -> {
                 running.set(false);
+                if (waitForMs == null) {
+                    setStatus(command);
+                }
                 return p;
             });
 
-            waitUntilDone(process, timeoutMs, waitForMs);
-            status.set(clearTmpOutput(process));
-            handleConsoleError(breakOnError, status.get(), command);
+            if (waitForMs != null) {
+                waitUntilDone(process, timeoutMs.get(), waitForMs);
+                setStatus(command);
+            }
             return this;
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             throw new TerminalExecutionException("Failed to run dir command [" + command + "] in dir [" + dir.getName() + "]", e);
-        } finally {
-            running.set(false);
-        }
-    }
-
-    private void handleConsoleError(final boolean breakOnError, final int status, final String command) {
-        if (breakOnError && status != 0) {
-            throw new IllegalStateException("Failed to run dir command [" + command + "] in dir [" + dir.getName() + "] output [" + tmpOutput.consoleError() + "]");
         }
     }
 
@@ -309,6 +285,13 @@ public class Terminal {
         return status.get();
     }
 
+    /**
+     * @return returns true if process is still running
+     */
+    public boolean running() {
+        return running.get();
+    }
+
     String[] addExecutor(final OsType os, final String command) {
         if (os == OsType.OS_WINDOWS) {
             return new String[]{"cmd.exe", "/c", command};
@@ -324,19 +307,34 @@ public class Terminal {
                 + tmpOutput.consoleError.size();
     }
 
-    private synchronized void waitUntilDone(final Process process, final long timeoutMs, final long waitForMs) throws InterruptedException {
-        process.waitFor(timeoutMs < 1 ? 10000 : timeoutMs, MILLISECONDS);
-        final long waitMs = waitForMs < 1 ? 5 : waitForMs;
-        while (running.get()) {
-            this.wait(waitMs);
-        }
-
-        var count = messageCount();
-        if ((waitForMs < 1 && count == 0) || waitForMs > 0) {
-            do {
-                count = messageCount();
+    private synchronized void waitUntilDone(final Process process, final long timeoutMs, final long waitForMs) {
+        try {
+            process.waitFor(timeoutMs < 1 ? 10000 : timeoutMs, MILLISECONDS);
+            final long waitMs = waitForMs < 1 ? 5 : waitForMs;
+            while (running.get()) {
                 this.wait(waitMs);
-            } while (count != messageCount());
+            }
+
+            var count = messageCount();
+            if ((waitForMs < 1 && count == 0) || waitForMs > 0) {
+                do {
+                    count = messageCount();
+                    this.wait(waitMs);
+                } while (count != messageCount());
+            }
+        } catch (InterruptedException ignored) {
+            //in case of a long-running app which is shutting down
+        }
+    }
+
+    private void setStatus(final String command) {
+        status.set(clearTmpOutput(process));
+        handleConsoleError(breakOnError.get(), status.get(), command);
+    }
+
+    private void handleConsoleError(final boolean breakOnError, final int status, final String command) {
+        if (breakOnError && status != 0) {
+            throw new IllegalStateException("Failed to run dir command [" + command + "] in dir [" + dir.getName() + "] output [" + tmpOutput.consoleError() + "]");
         }
     }
 
@@ -355,6 +353,16 @@ public class Terminal {
         }
         tmpOutput.clear();
         return outputStatus;
+    }
+
+    @Override
+    public String toString() {
+        return "Terminal{" +
+                ", running=" + running.get() +
+                ", status=" + status.get() +
+                ", pid=" + Optional.ofNullable(process).map(Process::pid).orElse(null) +
+                ", dir=" + dir +
+                '}';
     }
 
     public static class CommandOutput {

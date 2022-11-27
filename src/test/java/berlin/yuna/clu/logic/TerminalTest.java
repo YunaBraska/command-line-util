@@ -137,6 +137,17 @@ class TerminalTest {
     }
 
     @Test
+    void execute_async_shouldRunINBackground() throws InterruptedException {
+        final Terminal terminal = this.terminal.execute("sleep 1; echo \"done\";", null);
+        assertThat(terminal.running(), is(true));
+        assertThat(terminal.consoleInfo(), is(equalTo("")));
+        Thread.sleep(1100);
+        assertThat(terminal.running(), is(false));
+        assertThat(terminal.consoleInfo(), is(equalTo("done")));
+        assertThat(terminal.toString(), is(notNullValue()));
+    }
+
+    @Test
     void copyOf_shouldCopyTerminal() {
         final Terminal input = new Terminal().waitFor(10);
         input.execute("echo \"Howdy\"");

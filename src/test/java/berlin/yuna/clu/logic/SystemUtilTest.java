@@ -66,8 +66,8 @@ class SystemUtilTest {
     @Test
     void testOsArch() {
         for (Map.Entry<String, TestMaps.ExpectedArch> test : ARCH_TEST_MAP.entrySet()) {
-            assertThat("Input was " + test.getKey(), OsArch.of(test.getKey()), is(test.getValue().osArch()));
-            assertThat("Input was " + test.getKey(), OsArchType.of(test.getKey()), is(test.getValue().osArchType()));
+            assertThat("Input was " + test.getKey(), OsArch.of(test.getKey()), is(test.getValue().getOsArch()));
+            assertThat("Input was " + test.getKey(), OsArchType.of(test.getKey()), is(test.getValue().getOsArchType()));
         }
     }
 

@@ -46,7 +46,22 @@ public class TestMaps {
         return result;
     }
 
-    public record ExpectedArch(OsArch osArch, OsArchType osArchType) {
+    public static class ExpectedArch {
+        final OsArch osArch;
+        final OsArchType osArchType;
+
+        public ExpectedArch(final OsArch osArch, final OsArchType osArchType) {
+            this.osArch = osArch;
+            this.osArchType = osArchType;
+        }
+
+        public OsArch getOsArch() {
+            return osArch;
+        }
+
+        public OsArchType getOsArchType() {
+            return osArchType;
+        }
     }
 
     public static HashMap<String, ExpectedArch> generateArchTestMap() {

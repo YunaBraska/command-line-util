@@ -153,22 +153,39 @@ public class SystemUtil {
     }
 
     public static String killCommand(final OsType os) {
-        return switch (os) {
-            case OS_WINDOWS -> "taskkill /F /IM";
-            case OS_SOLARIS, OS_UNKNOWN -> "killall";
-            default -> "pkill -f";
-        };
+        switch (os) {
+            case OS_WINDOWS:
+                return "taskkill /F /IM";
+            case OS_SOLARIS:
+            case OS_UNKNOWN:
+                return "killall";
+            default:
+                return "pkill -f";
+        }
     }
 
     private SystemUtil() {
     }
 
     private static boolean setFilePermission(final File destination, final PosixFilePermission permission) {
-        return switch (permission) {
-            case OWNER_WRITE, GROUP_WRITE, OTHERS_WRITE -> destination.setWritable(true, permission == OWNER_WRITE);
-            case OWNER_READ, GROUP_READ, OTHERS_READ -> destination.setReadable(true, permission == OWNER_READ);
-            case OWNER_EXECUTE, GROUP_EXECUTE, OTHERS_EXECUTE ->
-                    destination.setExecutable(true, permission == OWNER_EXECUTE);
-        };
+        boolean successState = false;
+        switch (permission) {
+            case OWNER_WRITE:
+            case GROUP_WRITE:
+            case OTHERS_WRITE:
+                successState = destination.setWritable(true, permission == OWNER_WRITE);
+                break;
+            case OWNER_READ:
+            case GROUP_READ:
+            case OTHERS_READ:
+                successState = destination.setReadable(true, permission == OWNER_READ);
+                break;
+            case OWNER_EXECUTE:
+            case GROUP_EXECUTE:
+            case OTHERS_EXECUTE:
+                successState = destination.setExecutable(true, permission == OWNER_EXECUTE);
+                break;
+        }
+        return successState;
     }
 }

@@ -28,7 +28,7 @@ jobs:
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
       - name: Maven compile and update dependencies
         run: |
-          ./mvnw -B -q -N io.takari:maven:wrapper
+          ./mvnw -B -q -N maven:wrapper
           ./mvnw -B -q versions:update-parent -DgenerateBackupPoms=false -Dmaven.version.ignore=".+-(alpha|beta|M[0-9]+).*"
           ./mvnw -B -q versions:update-properties -DgenerateBackupPoms=false -Dmaven.version.ignore=".+-(alpha|beta|M[0-9]+).*"
           ./mvnw -B -q dependency:resolve -Dmaven.test.skip=true -P=tag,release

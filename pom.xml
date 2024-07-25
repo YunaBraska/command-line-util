@@ -5,7 +5,7 @@
 
     <groupId>berlin.yuna</groupId>
     <artifactId>command-line-util</artifactId>
-    <version>2.1.27</version>
+    <version>2.1.28</version>
     <packaging>jar</packaging>
 
     <name>${project.artifactId}</name>
@@ -39,7 +39,7 @@
         <project.build.sourceEncoding>${project.encoding}</project.build.sourceEncoding>
         <project.reporting.outputEncoding>${project.encoding}</project.reporting.outputEncoding>
         <!-- TEST -->
-        <hamcrest-core.version>2.2</hamcrest-core.version>
+        <hamcrest-core.version>3.0-rc1</hamcrest-core.version>
         <junit-jupiter.version>5.11.0-M2</junit-jupiter.version>
         <!-- BUILD -->
         <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>

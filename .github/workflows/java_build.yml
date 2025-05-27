@@ -1,0 +1,293 @@
+name: "BUILD - Java"
+on:
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+        required: false
+        description: "[ref] e.g. branch, tag or commit to checkout [default: github_ref_name || github_head_ref ]"
+      run_update:
+        type: boolean
+        required: false
+        default: true
+        description: "Update wrapper and properties"
+      run_test:
+        type: boolean
+        required: false
+        default: true
+        description: "Runs tests"
+      run_deploy:
+        type: string
+        required: false
+        default: false
+        description: "true=force, false=on changes, disabled=never"
+    secrets:
+      BOT_TOKEN:
+        required: false
+      CI_TOKEN:
+        required: false
+      CC_TEST_REPORTER_ID:
+        required: false
+      CENTRAL_USER:
+        required: true
+      CENTRAL_PASS:
+        required: true
+      GPG_SIGNING_KEY:
+        required: true
+      GPG_PASSPHRASE:
+        required: true
+
+env:
+  SPRING_PROFILE: ci
+
+jobs:
+  build:
+    name: "Build Java"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # These permissions are needed to interact with GitHub's OIDC Token endpoint.
+    permissions:
+      id-token: write
+      # update repository
+      contents: write
+      # create download GitHub packages
+      packages: write
+      # update deploy status
+      deployments: write
+    steps:
+      - name: "📄 Create context"
+        id: "context"
+        run: |
+          echo ""
+          echo "--------------------- REF --------------------"
+          ref=${{ inputs.ref || github.ref || github.ref_name || github.head_ref }}
+          echo "ref [${ref}]"
+          echo "ref=${ref}" >> $GITHUB_OUTPUT
+          echo ""
+          echo "--------------------- run_update --------------"
+          run_update=${{ inputs.run_update || true }}
+          echo "run_update [${run_update}]"
+          echo "run_update=${run_update}" >> $GITHUB_OUTPUT
+          if [[ "${run_update}" != "true" ]]; then
+            echo "run_update_icon=💤" >> $GITHUB_OUTPUT
+          fi
+          echo ""
+          echo "--------------------- run_test ----------------"
+          run_test=${{ inputs.run_test || true }}
+          echo "run_test [${run_test}]"
+          echo "run_test=${run_test}" >> $GITHUB_OUTPUT
+          echo ""
+          echo "--------------------- run_test_label -----------"
+          if [[ "${run_test}" == "true" ]]; then
+            run_test_label="🧪 Build & Test"
+          else
+            run_test_label="🏗️ Build only"
+          fi
+          echo "run_test_label [${run_test_label}]"
+          echo "run_test_label=${run_test_label}" >> $GITHUB_OUTPUT
+          echo ""
+          echo "--------------------- run_deploy ----------------"
+          run_deploy=${{ inputs.run_deploy || false }}
+          echo "run_deploy [${run_deploy}]"
+          echo "run_deploy=${run_deploy}" >> $GITHUB_OUTPUT
+          echo ""
+          echo "--------------------- run_cc --------------------"
+          run_cc=false
+          if [ -n "${{ secrets.CC_TEST_REPORTER_ID }}" ]; then
+            run_cc="true"
+          fi
+          if [[ "${run_cc}" != "true" ]]; then
+            echo "run_cc_icon=💤" >> $GITHUB_OUTPUT
+          fi
+          echo "run_cc [${run_cc}]"
+          echo "run_cc=${run_cc}" >> $GITHUB_OUTPUT
+          echo ""
+          echo "--------------------- BOT CONFIG ----------------"
+          git config --global user.name 'Kira Bot'
+          git config --global user.email 'kira@noreply.github.com'
+      - name: "🧑‍💻 Checkout [${{ steps.context.outputs.ref }}]"
+        uses: actions/checkout@main
+        with:
+          fetch-depth: 24
+          ref: ${{ steps.context.outputs.ref }}
+          token: ${{ secrets.BOT_TOKEN || secrets.CI_TOKEN  || secrets.GITHUB_TOKEN }}
+      - name: "♻️ Restore cache [${{ runner.os }}-build-${{ hashFiles('**/pom.xml', '**/build.gradle*', '**/package-lock.json') }}]"
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            **/node_modules/*
+          key: ${{ runner.os }}-build-${{ hashFiles('**/pom.xml', '**/build.gradle*', '**/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-build-${{ hashFiles('**/pom.xml', '**/build.gradle*', '**/package-lock.json') }}
+      - name: "🔍 Read Java Info"
+        id: "java_info"
+        uses: YunaBraska/java-info-action@main
+      - name: "☕ Setup Java [${{ steps.java_info.outputs.java_version }}] Builder [${{ steps.java_info.outputs.builder_name }}] [${{ steps.java_info.outputs.builder_version }}]"
+        uses: actions/setup-java@main
+        with:
+          java-version: ${{ steps.java_info.outputs.java_version }}
+          distribution: 'temurin'
+          server-id: central
+          server-username: CENTRAL_USER
+          server-password: CENTRAL_PASS
+          gpg-private-key: ${{ secrets.GPG_SIGNING_KEY }} # Value of the GPG private key to import
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+      - name: "${{ steps.context.outputs.run_update_icon || '🔄' }} Update"
+        id: "update"
+        if: ${{ steps.context.outputs.run_update }}
+        run: |
+          ${{ steps.java_info.outputs.cmd_update_wrapper }}
+          # DEPENDENCY UPDATES ARE ONLY POSSIBLE IN MAVEN PROJECTS
+          if [ "${{ steps.java_info.outputs.is_maven }}" == "true" ]; then
+            ${{ steps.java_info.outputs.cmd_update_props }}
+            ${{ steps.java_info.outputs.cmd_update_parent }}
+          fi
+          echo "--------------------- has_lib_chages ----------------"
+          has_lib_chages=false
+          if [[ -n $(git status -s) && ${{ startsWith(inputs.ref, 'refs/heads/') }} ]]; then
+            has_lib_chages=true
+          fi
+          if [[ "${has_lib_chages}" != "true" ]]; then
+            echo "has_lib_chages_icon=💤" >> $GITHUB_OUTPUT
+          fi
+          echo "has_lib_chages [${has_lib_chages}]"
+          echo "has_lib_chages=${has_lib_chages}" >> $GITHUB_OUTPUT
+          echo ""
+      - name: "${{ steps.context.outputs.run_test_label }}"
+        run: |
+          if [ "${{ steps.context.outputs.run_test }}" = "true" ]; then
+            ${{ steps.java_info.outputs.cmd_test_build }}
+          else
+            ${{ steps.java_info.outputs.cmd_build }}
+          fi
+      - name: "📊 collect infos"
+        id: "repo_context"
+        run: |
+          echo ""
+          echo "--------------------- JACOCO REPORT ----------------"
+          jacoco_report=$(find . -type f -name "testCodeCoverageReport.xml" -o -name "jacocoTestReport.xml" -o -name "jacoco.xml" | awk -F/ '{print NF, $0}' | sort -n | cut -d' ' -f2- | head -n 1)
+          echo "jacoco_report [${jacoco_report}]"
+          echo "jacoco_report=${jacoco_report}" >> $GITHUB_OUTPUT
+          echo ""
+          echo "--------------------- BUILD DIR --------------------"
+          build_dir=$(echo "${jacoco_report}" | grep -oE "(build|target)" | head -n 1)
+          if [ -z "${build_dir}" ]; then
+            build_dir=$(find . -type d \( -name "target" -o -name "build" \) | sort | head -n 1)
+          fi
+          echo "build_dir [${build_dir}]"
+          echo "build_dir=${build_dir}" >> $GITHUB_OUTPUT
+          mkdir -p "${build_dir}"
+          echo ""
+          echo "--------------------- TEST PATH --------------------"
+          test_path=$(find . -type d -path "*/src/test" | tr '\n' ',')
+          test_path=${test_path%,}
+          echo "test_path [${sonar_tests}]"
+          echo "test_path=${test_path}" >> $GITHUB_OUTPUT
+          echo ""
+          echo "--------------------- SOURCE PATH ------------------"
+          source_path=$(find . -type d -path "*src/main" | tr '\n' ',')
+          source_path=${source_path%,}
+          echo "source_path [${source_path}]"
+          echo "source_path=${source_path}" >> $GITHUB_OUTPUT
+          echo ""
+          echo "--------------------- REPORT PATH ------------------"
+          report_path=$(find . -type f -name "TEST-*.xml" -exec dirname {} \; | sort | uniq | tr '\n' ',')
+          report_path=${report_path%,}
+          echo "report_path [${report_path}]"
+          echo "report_path=${report_path}" >> $GITHUB_OUTPUT
+          echo ""
+          echo "--------------------- SHOULD_DEPLOY ----------------"
+          should_deploy="false"
+          echo "steps.update.outputs.has_lib_chages [${{ steps.update.outputs.has_lib_chages }}]"
+          echo "steps.context.outputs.run_deploy [${{ steps.context.outputs.run_deploy }}]"
+          if [[ "${{ steps.context.outputs.run_deploy }}" == "true" ]]; then
+            should_deploy="true"
+          elif [[ "${{ steps.context.outputs.run_deploy }}" == "false" && "${{ steps.update.outputs.has_lib_chages }}" == "true" ]]; then
+            should_deploy="true"
+          elif [[ "${{ steps.context.outputs.run_deploy }}" == "disabled" ]]; then
+            should_deploy="false"
+          fi
+          if [[ "${should_deploy}" != "true" ]]; then
+            echo "should_deploy_icon=💤" >> $GITHUB_OUTPUT
+          fi
+          echo "should_deploy [${should_deploy}]"
+          echo "should_deploy=${should_deploy}" >> $GITHUB_OUTPUT
+          echo ""
+          echo "--------------------- SHOULD_DEPLOY_OR_CHANGE ------"
+          should_deploy_or_change="false"
+          if [[ "${{ steps.context.outputs.run_deploy }}" == "true" || "${{ steps.update.outputs.has_lib_chages }}" == "true" ]]; then
+            should_deploy_or_change="true"
+          fi
+          if [[ "${should_deploy_or_change}" != "true" ]]; then
+            echo "should_deploy_or_change_icon=💤" >> $GITHUB_OUTPUT
+          fi
+          echo "should_deploy_or_change [${should_deploy_or_change}]"
+          echo "should_deploy_or_change=${should_deploy_or_change}" >> $GITHUB_OUTPUT
+          echo ""
+      - name: "${{ steps.repo_context.outputs.should_deploy_or_change_icon || '📝' }} Create new version"
+        if: ${{ steps.repo_context.outputs.should_deploy_or_change == 'true' }}
+        id: "semver_info"
+        run: |
+          semver=$(date -u '+%Y.%m.%j%H%M')
+          echo "semver=${semver}" >> $GITHUB_OUTPUT
+          echo "semver [${semver}]"
+          if [ "${{ steps.java_info.outputs.is_maven }}" == "true" ]; then
+              ${{ steps.java_info.outputs.cmd }} -B -q versions:set -DnewVersion=${semver} -DgenerateBackupPoms=false
+          fi
+      - name: "${{ steps.repo_context.outputs.should_deploy_icon || '🏷' }}️ Deploy start ${{ steps.semver_info.outputs.semver }}"
+        if: ${{ steps.repo_context.outputs.should_deploy == 'true' }}
+        uses: bobheadxi/deployments@v1
+        id: deployment-status
+        with:
+          step: start
+          token: ${{ secrets.BOT_TOKEN || secrets.GITHUB_TOKEN }}
+          env: "maven_central"
+          desc: "Started deploy [${{ steps.semver_info.outputs.semver }}] to [maven_central]"
+      - name: "${{ steps.repo_context.outputs.should_deploy_icon || '🍾' }}️ Deploy ${{ steps.semver_info.outputs.semver }}"
+        if: ${{ steps.repo_context.outputs.should_deploy == 'true' }}
+        run: ./mvnw deploy -P release -Dmaven.test.skip=true -Dgpg.passphrase="${{ secrets.GPG_PASSPHRASE }}" -B
+        env:
+          GITHUB_TOKEN: ${{ secrets.BOT_TOKEN || secrets.GITHUB_TOKEN }}
+          CENTRAL_USER: ${{ secrets.CENTRAL_USER }}
+          CENTRAL_PASS: ${{ secrets.CENTRAL_PASS }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      - name: "${{ steps.repo_context.outputs.should_deploy_icon || '🏷️' }} Deploy finish ${{ steps.semver_info.outputs.semver }}"
+        if: ${{ steps.repo_context.outputs.should_deploy == 'true' }}
+        uses: bobheadxi/deployments@v1
+        with:
+          step: finish
+          token: ${{ secrets.BOT_TOKEN || secrets.GITHUB_TOKEN }}
+          env: "maven_central"
+          env_url: "https://central.sonatype.com/publishing"
+          status: ${{ job.status }}
+          deployment_id: ${{ steps.deployment-status.outputs.deployment_id }}
+          desc: "Finished deploy [${{ steps.semver_info.outputs.semver }}] to [maven_central]"
+      - name: "${{ steps.update.outputs.has_lib_chages_icon || '💾' }} Commit changes"
+        if: ${{ steps.update.outputs.has_lib_chages == 'true' }}
+        run: |
+          git add .
+          git commit -am "chore: updated dependencies 📦"
+          git push origin HEAD:${{ steps.context.outputs.ref }}
+      - name: "${{ steps.repo_context.outputs.should_deploy_icon || '🔖' }} Tag & Release Release ${{ steps.semver_info.outputs.semver }}"
+        uses: ncipollo/release-action@v1
+        if: ${{ steps.repo_context.outputs.should_deploy == 'true' }}
+        with:
+          draft: false
+          prerelease: false
+          allowUpdates: true
+          removeArtifacts: true
+          token: ${{ secrets.BOT_TOKEN || secrets.CI_TOKEN || secrets.GITHUB_TOKEN }}
+          tag: ${{ steps.semver_info.outputs.semver }}
+          name: ${{ steps.semver_info.outputs.semver }}
+          artifacts: "target/*.jar,build/*.jar"
+          generateReleaseNotes: true
+      - name: "${{ steps.context.outputs.run_cc_icon || '📈' }} Publish code quality"
+        if: ${{ steps.context.outputs.run_cc == 'true' && steps.repo_context.outputs.jacoco_report != '' }}
+        uses: paambaati/codeclimate-action@v9.0.0
+        env:
+          CC_TEST_REPORTER_ID: ${{secrets.CC_TEST_REPORTER_ID}}
+          JACOCO_SOURCE_PATH: "${{github.workspace}}/src/main/java"
+        with:
+          coverageLocations: ${{ steps.repo_context.outputs.jacoco_report }}:jacoco

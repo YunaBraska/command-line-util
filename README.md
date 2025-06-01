@@ -102,7 +102,7 @@ boolean removed = SystemUtil.deleteDirectory
 
 ![command-line-util](src/test/resources/banner.png "command-line-util")
 
-[build_shield]: https://github.com/YunaBraska/command-line-util/workflows/JAVA_CI/badge.svg
+[build_shield]: https://github.com/YunaBraska/command-line-util/workflows/Daily/badge.svg
 [build_link]: https://github.com/YunaBraska/command-line-util/actions?query=workflow%3AJAVA_CI
 [maintainable_shield]: https://img.shields.io/codeclimate/maintainability/YunaBraska/command-line-util?style=flat-square
 [maintainable_link]: https://codeclimate.com/github/YunaBraska/command-line-util/maintainability

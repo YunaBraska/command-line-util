@@ -195,7 +195,7 @@ public class ArgumentReader extends ConcurrentHashMap<String, List<String>> {
      * getBoolean
      *
      * @param keys search for
-     * @return true if [value == 1], [value == true], [key != && value == null]
+     * @return true if [value == 1], [value == true], [key != &amp;&amp; value == null]
      */
     public boolean getBoolean(final String... keys) {
         return getBoolean(0, keys);
@@ -206,7 +206,7 @@ public class ArgumentReader extends ConcurrentHashMap<String, List<String>> {
      *
      * @param keys  search for
      * @param index number of value
-     * @return true if [value == 1], [value == true], [key != && value == null]
+     * @return true if [value == 1], [value == true], [key != &amp;&amp; value == null]
      */
     public boolean getBoolean(final int index, final String... keys) {
         return getBoolean(null, index, keys);
@@ -218,7 +218,7 @@ public class ArgumentReader extends ConcurrentHashMap<String, List<String>> {
      * @param keys      search for
      * @param index     number of value
      * @param separator handles values as list if present
-     * @return true if [value == 1], [value == true], [key != && value == null]
+     * @return true if [value == 1], [value == true], [key != &amp;&amp; value == null]
      */
     public boolean getBoolean(final String separator, final int index, final String... keys) {
         return getString(separator, index, keys).map(toBoolean()).orElseGet(() -> isPresent(keys));

@@ -9,6 +9,11 @@ on:
         required: true
         default: true
         type: boolean
+      github_packages:
+        description: GitHub Packages.
+        required: true
+        default: true
+        type: boolean
       force:
         description: Force.
         required: true
@@ -24,7 +29,7 @@ jobs:
     uses: YunaBraska/YunaBraska/.github/workflows/wc_java_release.yml@6da5dd7ce18e43cd1de0aa721037b0da1a9d28cd
     with:
       force: ${{ inputs.force }}
-      dry_run: ${{ inputs.maven_central != true }}
+      dry_run: ${{ inputs.maven_central != true || inputs.github_packages != true }}
 
   central:
     needs:
@@ -41,11 +46,23 @@ jobs:
       GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
       GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
+  packages:
+    needs:
+      - release
+    if: ${{ always() && !cancelled() && needs.release.result == 'success' }}
+    permissions:
+      actions: read
+      contents: read
+      deployments: write
+      packages: write
+    uses: YunaBraska/YunaBraska/.github/workflows/wc_java_publish_github_packages.yml@6da5dd7ce18e43cd1de0aa721037b0da1a9d28cd
+
   github:
     needs:
       - release
       - central
-    if: ${{ always() && !cancelled() && needs.release.outputs.dry_run == 'false' && !endsWith(needs.release.outputs.version, '-SNAPSHOT') && needs.release.result == 'success' && needs.central.result == 'success' }}
+      - packages
+    if: ${{ always() && !cancelled() && needs.release.outputs.dry_run == 'false' && !endsWith(needs.release.outputs.version, '-SNAPSHOT') && needs.release.result == 'success' && needs.central.result == 'success' && needs.packages.result == 'success' }}
     permissions:
       actions: read
       contents: write

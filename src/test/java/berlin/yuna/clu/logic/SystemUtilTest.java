@@ -166,9 +166,9 @@ class SystemUtilTest {
     @Test
     void readFileLines_shouldBeSuccessful() throws URISyntaxException {
         final List<String> testResource = SystemUtil.readFileLines(Paths.get(requireNonNull(getClass().getClassLoader().getResource(
-                ".gitignore")).toURI()));
+                "test-lines.txt")).toURI()));
         assertThat(testResource, is(notNullValue()));
-        assertThat(testResource.size(), is(17));
+        assertThat(testResource.size(), is(2));
     }
 
     @Test

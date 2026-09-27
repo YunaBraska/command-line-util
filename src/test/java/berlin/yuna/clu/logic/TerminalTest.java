@@ -7,6 +7,11 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import static berlin.yuna.clu.model.OsType.OS_LINUX;
 import static berlin.yuna.clu.model.OsType.OS_WINDOWS;
@@ -126,6 +131,75 @@ class TerminalTest {
         final String console = terminal.execute("echo \"Sub\"").execute("echo \"ject\"").consoleInfo();
         assertThat(console, containsString("Sub"));
         assertThat(console, containsString("ject"));
+    }
+
+    @Test
+    void execute_shouldReleaseStreamReadersAfterRepeatedCommands() throws InterruptedException {
+        final Set<Thread> readers = ConcurrentHashMap.newKeySet();
+        final CountDownLatch output = new CountDownLatch(6);
+        final Consumer<String> capture = line -> {
+            readers.add(Thread.currentThread());
+            output.countDown();
+        };
+        terminal.consumerInfoStream(capture).consumerErrorStream(capture);
+
+        for (int index = 0; index < 3; index++) {
+            terminal.execute("echo output; echo error >&2");
+            assertThat(terminal.status(), is(0));
+        }
+
+        assertThat(output.await(5, TimeUnit.SECONDS), is(true));
+        assertThat(terminal.consoleInfo(), containsString("output"));
+        assertThat(terminal.consoleInfo(), containsString("error"));
+        assertReadersStopped(readers);
+    }
+
+    @Test
+    void execute_shouldReleaseStreamReadersAfterFailure() throws InterruptedException {
+        final Set<Thread> readers = ConcurrentHashMap.newKeySet();
+        final CountDownLatch output = new CountDownLatch(2);
+        final Consumer<String> capture = line -> {
+            readers.add(Thread.currentThread());
+            output.countDown();
+        };
+        terminal.consumerInfoStream(capture).consumerErrorStream(capture).breakOnError(true);
+
+        assertThrows(IllegalStateException.class,
+                () -> terminal.execute("echo output; echo error >&2; exit 7"));
+
+        assertThat(output.await(5, TimeUnit.SECONDS), is(true));
+        assertThat(terminal.status(), is(7));
+        assertReadersStopped(readers);
+    }
+
+    @Test
+    void executeAsync_shouldReleaseStreamReadersWhenProcessIsDestroyed() throws InterruptedException {
+        final Set<Thread> readers = ConcurrentHashMap.newKeySet();
+        final CountDownLatch output = new CountDownLatch(2);
+        final Consumer<String> capture = line -> {
+            readers.add(Thread.currentThread());
+            output.countDown();
+        };
+        terminal.consumerInfoStream(capture).consumerErrorStream(capture);
+        terminal.execute("echo output; echo error >&2; read response", null);
+
+        try {
+            assertThat(output.await(5, TimeUnit.SECONDS), is(true));
+            assertThat(terminal.process().isAlive(), is(true));
+        } finally {
+            terminal.process().destroyForcibly();
+            assertThat(terminal.process().waitFor(5, TimeUnit.SECONDS), is(true));
+        }
+
+        assertReadersStopped(readers);
+    }
+
+    private static void assertReadersStopped(final Set<Thread> readers) throws InterruptedException {
+        assertThat(readers.size() >= 2, is(true));
+        for (final Thread reader : readers) {
+            reader.join(2000);
+            assertThat("Stream reader remains alive: " + reader.getName(), reader.isAlive(), is(false));
+        }
     }
 
     @Test

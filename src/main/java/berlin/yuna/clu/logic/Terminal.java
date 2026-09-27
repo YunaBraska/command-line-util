@@ -272,8 +272,14 @@ public class Terminal {
         builder.command(addExecutor(SystemUtil.OS, command));
         final var result = builder.start();
 
-        Executors.newSingleThreadExecutor().submit(new StreamGobbler(result.getInputStream(), singletonList(tmpOutput::consoleInfo)));
-        Executors.newSingleThreadExecutor().submit(new StreamGobbler(result.getErrorStream(), singletonList(tmpOutput::consoleError)));
+        final var readers = Executors.newFixedThreadPool(2);
+        try {
+            readers.submit(new StreamGobbler(result.getInputStream(), singletonList(tmpOutput::consoleInfo)));
+            readers.submit(new StreamGobbler(result.getErrorStream(), singletonList(tmpOutput::consoleError)));
+        } finally {
+            // Drain both streams, then let the reader threads terminate at EOF.
+            readers.shutdown();
+        }
 
         return result;
     }
